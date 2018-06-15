@@ -13,6 +13,8 @@ using Microsoft.Extensions.Options;
 using AutoMapper;
 using Microsoft.Azure.KeyVault.Models;
 using Swashbuckle.AspNetCore.Swagger;
+using Inzynierka.Repository.Interfaces;
+using Inzynierka.Repository.Repositories;
 
 namespace Inzynierka.API
 {
@@ -42,7 +44,7 @@ namespace Inzynierka.API
             services.AddDbContext<ApplicationDbContext>(options => 
             options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
            
-            //services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+            services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
         }
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
