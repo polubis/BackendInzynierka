@@ -15,6 +15,12 @@ using Microsoft.Azure.KeyVault.Models;
 using Swashbuckle.AspNetCore.Swagger;
 using Inzynierka.Repository.Interfaces;
 using Inzynierka.Repository.Repositories;
+using Inzynierka.Services.Interfaces;
+using Inzynierka.Services.Services;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.Text;
+using Microsoft.IdentityModel.Protocols;
 
 namespace Inzynierka.API
 {
@@ -31,6 +37,24 @@ namespace Inzynierka.API
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc();
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            }).AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = Configuration["Jwt:Issuer"],
+                    ValidAudience = Configuration["Jwt:Issuer"],
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Jwt:Key"]))
+                };
+            });
+
             services.AddAutoMapper();
             services.AddSwaggerGen(c => {
                 c.SwaggerDoc("v1", new Info
@@ -43,8 +67,12 @@ namespace Inzynierka.API
             });
             services.AddDbContext<ApplicationDbContext>(options => 
             options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
-           
+            services.AddSingleton<IConfigurationManager, ConfigurationManager>();
+
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+            services.AddTransient<IUserService, UserService>();
+
+            
         }
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
@@ -53,11 +81,13 @@ namespace Inzynierka.API
             {
                 app.UseDeveloperExceptionPage();
             }
+            app.UseCors(bulider => bulider.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod().AllowCredentials());
+
             app.UseSwagger();
             app.UseSwaggerUI(c => {
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
             });
-
+            app.UseAuthentication();
             app.UseMvc();
         }
     }

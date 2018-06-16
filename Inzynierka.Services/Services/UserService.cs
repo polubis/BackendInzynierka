@@ -6,7 +6,11 @@ using Inzynierka.Repository.Interfaces;
 using Inzynierka.Services.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 using System.Text;
+using System.IdentityModel.Tokens.Jwt;
+using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
 
 namespace Inzynierka.Services.Services
 {
@@ -14,10 +18,50 @@ namespace Inzynierka.Services.Services
     {
         private readonly IRepository<User> _usersRepository;
         private readonly IMapper _mapper;
+        private readonly IConfigurationManager _configurationManager;
         public UserService(IRepository<User> usersRepository, IMapper mapper)
         {
             _usersRepository = usersRepository;
             _mapper = mapper;
+        }
+        private string GetHash(string text)
+        {
+            using (var sha256 = SHA256.Create())
+            {
+                var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(text));
+                return BitConverter.ToString(hashedBytes).Replace("-", "").ToLower();
+            }
+        }
+        private string GetToken(User user, string secretKey, string issuer, DateTime? expirationDate = null)
+        {
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.GivenName, user.Username),
+                new Claim(ClaimTypes.Sid, user.Id.ToString()),
+            };
+            var token = new JwtSecurityToken(issuer, issuer, claims, expires: expirationDate, signingCredentials: creds);
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+        public ResultDto<LoginDto> Login(LoginViewModel loginModel)
+        {
+            var result = new ResultDto<LoginDto>();
+            var user = _usersRepository.GetBy(x => x.Username == loginModel.Username);
+
+            if (user == null && GetHash(loginModel.Password) != user.PasswordHash)
+            {
+                result.Error = "Błędny login lub hasło";
+                return result;
+            }
+            var loginDto = _mapper.Map<LoginDto>(user);
+
+            loginDto.Token = GetToken(user, "theKeyGeneratedToken",
+                "http://localhost:52535", DateTime.Now.AddDays(7));
+
+            result.SuccessResult = loginDto;
+      
+            return result;
         }
 
         public ResultDto<RegisterDto> Register(RegisterViewModel ViewModel)
@@ -38,7 +82,7 @@ namespace Inzynierka.Services.Services
 
             var user = _mapper.Map<User>(ViewModel);
 
-            user.PasswordHash = ViewModel.PasswordHash;
+            user.PasswordHash = GetHash(ViewModel.Password);
 
             if (_usersRepository.Insert(user) == 0)
             {
@@ -49,7 +93,7 @@ namespace Inzynierka.Services.Services
             result.SuccessResult = _mapper.Map<RegisterDto>(user);
 
             return result;
-
         }
+       
     }
 }

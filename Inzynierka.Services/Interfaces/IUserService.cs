@@ -8,6 +8,7 @@ namespace Inzynierka.Services.Interfaces
 {
     public interface IUserService
     {
-        ResultDto<RegisterDto> Register(RegisterViewModel ViewModel);
+        ResultDto<RegisterDto> Register(RegisterViewModel registerModel);
+        ResultDto<LoginDto> Login(LoginViewModel loginModel);
     }
 }

@@ -29,13 +29,34 @@ namespace Inzynierka.API.Controllers
             }
             var result = _userService.Register(registerModel);
 
-            if (result.Error != "")
+            if (result.Error != null)
             {
                 return BadRequest(result);
             }
 
             return Ok(result);
         }
+
+        [AllowAnonymous]
+        [HttpPost("login")]
+        public IActionResult Login([FromBody] LoginViewModel loginViewModel)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var result = _userService.Login(loginViewModel);
+
+            if(result.Error != null)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+
+     
 
     }
 }

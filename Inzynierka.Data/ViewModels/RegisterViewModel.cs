@@ -17,7 +17,7 @@ namespace Inzynierka.Data.ViewModels
         public string Email { get; set; }
 
         [Required]
-        public string PasswordHash { get; set; }
+        public string Password { get; set; }
 
         [StringLength(30, ErrorMessage = "Długość imienia powinna mieć od 3 do 30 znaków", MinimumLength = 3)]
         public string FirstName { get; set; }

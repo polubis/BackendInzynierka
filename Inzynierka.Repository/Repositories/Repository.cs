@@ -34,5 +34,15 @@ namespace Inzynierka.Repository.Repositories
         {
             return _dbSet.Any(expression);
         }
+
+        public T GetBy(Expression<Func<T, bool>> getBy, params Expression<Func<T, object>>[] includes)
+        {
+            IQueryable<T> query = _dbSet;
+            foreach (var include in includes)
+            {
+                query = query.Include(include);
+            }
+            return query.FirstOrDefault(getBy);
+        }
     }
 }
