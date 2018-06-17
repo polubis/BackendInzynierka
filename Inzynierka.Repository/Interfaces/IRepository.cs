@@ -11,5 +11,6 @@ namespace Inzynierka.Repository.Interfaces
         int Insert(T entity);
         bool Exist(Expression<Func<T, bool>> expression);
         T GetBy(Expression<Func<T, bool>> getBy, params Expression<Func<T, object>>[] includes);
+        int Update(T entity);
     } 
 }

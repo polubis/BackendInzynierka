@@ -15,6 +15,7 @@ namespace Inzynierka.Services.Mapper
             CreateMap<RegisterDto, User>();
             CreateMap<RegisterViewModel, User>();
             CreateMap<User, LoginDto>();
+            CreateMap<ActivateEmailDto, User>();
         }
     }
 }

@@ -111,6 +111,40 @@ namespace Inzynierka.Services.Services
         }
 
         
+
+        public ResultDto<ActivateEmailDto> ConfirmRegister(string link)
+        {
+            var result = new ResultDto<ActivateEmailDto>();
+
+            var user = _usersRepository.GetBy(x => x.CookiesActivateLink == link);
+
+            if (user == null)
+            {
+                result.Error = "Nie prawidłowy link aktywacyjny";
+                return result;
+            }
+
+            if (user.isAcceptedRegister)
+            {
+                result.Error = "Te konto już zostało aktywowane";
+                return result;
+            }
+
+            user.CookiesActivateLink = link;
+            user.isAcceptedRegister = true;
+
+            if (_usersRepository.Update(user) == 0)
+            {
+                result.Error = "Wystąpił błąd podczas procesu aktywacji konta";
+                return result;
+            }
+
+            var updatedUser = _usersRepository.GetBy(x => x.CookiesActivateLink == link);
+
+            result.SuccessResult = _mapper.Map<ActivateEmailDto>(updatedUser);
+
+            return result;
+        }
        
     }
 }

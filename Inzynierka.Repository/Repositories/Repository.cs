@@ -44,5 +44,18 @@ namespace Inzynierka.Repository.Repositories
             }
             return query.FirstOrDefault(getBy);
         }
+
+        public int Update(T entity)
+        {
+            if (entity == null)
+            {
+                throw new ArgumentNullException("entity");
+            }
+            entity.ModifiedDate = DateTime.Now;
+            _dbSet.Update(entity);
+            return _dbContext.SaveChanges();
+        }
+
+       
     }
 }

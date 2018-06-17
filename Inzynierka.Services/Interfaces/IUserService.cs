@@ -10,5 +10,7 @@ namespace Inzynierka.Services.Interfaces
     {
         ResultDto<RegisterDto> Register(RegisterViewModel registerModel);
         ResultDto<LoginDto> Login(LoginViewModel loginModel);
+
+        ResultDto<ActivateEmailDto> ConfirmRegister(string link);
     }
 }

@@ -56,6 +56,21 @@ namespace Inzynierka.API.Controllers
             return Ok(result);
         }
 
+        [AllowAnonymous]
+        [HttpPost("register/activate/{link}")]
+        public IActionResult ActivateAccount(string link)
+        {
+            var result = _userService.ConfirmRegister(link);
+
+            if(result.Error != null)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+
+        }
+
      
 
     }
