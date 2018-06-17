@@ -18,6 +18,13 @@ namespace Inzynierka.Data.DbModels
         [Required]
         public string PasswordHash { get; set; }
 
+        [Required]
+        public bool isAcceptedRegister { get; set; } = false;
+
+        [Required]
+        public string CookiesActivateLink { get; set; }
+
+
 
     }
 }

@@ -11,9 +11,10 @@ using System;
 namespace Inzynierka.Repository.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20180617104006_add-confirmregister")]
+    partial class addconfirmregister
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -26,9 +27,6 @@ namespace Inzynierka.Repository.Migrations
                         .ValueGeneratedOnAdd();
 
                     b.Property<DateTime?>("BirthDate");
-
-                    b.Property<string>("CookiesActivateLink")
-                        .IsRequired();
 
                     b.Property<DateTime>("CreationDate");
 

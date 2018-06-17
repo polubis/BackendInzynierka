@@ -71,7 +71,7 @@ namespace Inzynierka.API
 
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             services.AddTransient<IUserService, UserService>();
-
+            services.AddTransient<IEmailService, EmailService>();
             
         }
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

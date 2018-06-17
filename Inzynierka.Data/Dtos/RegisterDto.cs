@@ -6,6 +6,5 @@ namespace Inzynierka.Data.Dtos
 {
     public class RegisterDto:BaseDto
     {
-
     }
 }

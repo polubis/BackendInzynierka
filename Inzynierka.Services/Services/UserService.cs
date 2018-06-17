@@ -19,10 +19,14 @@ namespace Inzynierka.Services.Services
         private readonly IRepository<User> _usersRepository;
         private readonly IMapper _mapper;
         private readonly IConfigurationManager _configurationManager;
-        public UserService(IRepository<User> usersRepository, IMapper mapper)
+        private readonly IEmailService _emailService;
+        public UserService(IRepository<User> usersRepository, IMapper mapper, IConfigurationManager configurationManager, IEmailService emailService)
         {
             _usersRepository = usersRepository;
             _mapper = mapper;
+            _configurationManager = configurationManager;
+            _emailService = emailService;
+
         }
         private string GetHash(string text)
         {
@@ -44,12 +48,17 @@ namespace Inzynierka.Services.Services
             var token = new JwtSecurityToken(issuer, issuer, claims, expires: expirationDate, signingCredentials: creds);
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
+        private string GenerateActivationLink(User user)
+        {
+            return GetHash(user.Username + user.Email);
+        }
         public ResultDto<LoginDto> Login(LoginViewModel loginModel)
         {
             var result = new ResultDto<LoginDto>();
             var user = _usersRepository.GetBy(x => x.Username == loginModel.Username);
 
-            if (user == null && GetHash(loginModel.Password) != user.PasswordHash)
+            if (user == null || GetHash(loginModel.Password) != user.PasswordHash)
             {
                 result.Error = "Błędny login lub hasło";
                 return result;
@@ -83,6 +92,7 @@ namespace Inzynierka.Services.Services
             var user = _mapper.Map<User>(ViewModel);
 
             user.PasswordHash = GetHash(ViewModel.Password);
+            user.CookiesActivateLink = GenerateActivationLink(user);
 
             if (_usersRepository.Insert(user) == 0)
             {
@@ -90,10 +100,17 @@ namespace Inzynierka.Services.Services
                 return result;
 
             }
+
+
             result.SuccessResult = _mapper.Map<RegisterDto>(user);
+
+            // Tu chcialbym asynchronicznie wyslac wiadomosc
+            _emailService.SendEmailAfterRegister(ViewModel.Email, user.CookiesActivateLink, "Potwierdzenie rejestracji", ViewModel.Username);
 
             return result;
         }
+
+        
        
     }
 }
