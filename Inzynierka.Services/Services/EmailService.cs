@@ -35,7 +35,7 @@ namespace Inzynierka.Services.Services
             body.AppendFormat("Witaj, {0}!\n", Username);
             body.AppendLine(@"Dziękujemy za utworzenie konta w naszym serwisie. Poniżej przesyłamy link aktywacyjny do twojego konta.
                 Jeżeli to nie ty je utworzyłeś to poprostu zignoruj wiadomość");
-            string link = "http://localhost:3000/register/confirm/";
+            string link = "http://localhost:3000/register/activate/";
 
             body.AppendFormat("Link: {0}", link + GeneratedLink);
             message.Body = body.ToString();

@@ -14,12 +14,12 @@ namespace Inzynierka.Data.DbModels
         [Required]
         public string Email { get; set; }
         public DateTime? BirthDate { get; set; }
-        public bool Sex { get; set; }
+        public bool? Sex { get; set; }
         [Required]
         public string PasswordHash { get; set; }
 
         [Required]
-        public bool isAcceptedRegister { get; set; } = false;
+        public bool IsAcceptedRegister { get; set; } = false;
 
         [Required]
         public string CookiesActivateLink { get; set; }

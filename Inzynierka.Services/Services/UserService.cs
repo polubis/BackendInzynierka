@@ -63,6 +63,13 @@ namespace Inzynierka.Services.Services
                 result.Error = "Błędny login lub hasło";
                 return result;
             }
+
+            if (!user.IsAcceptedRegister)
+            {
+                result.Error = "To konto nie zostało jeszcze aktywowane";
+                return result;
+            }
+
             var loginDto = _mapper.Map<LoginDto>(user);
 
             loginDto.Token = GetToken(user, "theKeyGeneratedToken",
@@ -104,7 +111,6 @@ namespace Inzynierka.Services.Services
 
             result.SuccessResult = _mapper.Map<RegisterDto>(user);
 
-            // Tu chcialbym asynchronicznie wyslac wiadomosc
             _emailService.SendEmailAfterRegister(ViewModel.Email, user.CookiesActivateLink, "Potwierdzenie rejestracji", ViewModel.Username);
 
             return result;
@@ -120,18 +126,18 @@ namespace Inzynierka.Services.Services
 
             if (user == null)
             {
-                result.Error = "Nie prawidłowy link aktywacyjny";
+                result.Error = "Nieprawidłowy link aktywacyjny";
                 return result;
             }
 
-            if (user.isAcceptedRegister)
+            if (user.IsAcceptedRegister)
             {
                 result.Error = "Te konto już zostało aktywowane";
                 return result;
             }
 
             user.CookiesActivateLink = link;
-            user.isAcceptedRegister = true;
+            user.IsAcceptedRegister = true;
 
             if (_usersRepository.Update(user) == 0)
             {
