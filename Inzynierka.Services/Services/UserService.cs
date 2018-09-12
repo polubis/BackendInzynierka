@@ -11,6 +11,8 @@ using System.Text;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
+using System.Threading.Tasks;
+using System.IO;
 
 namespace Inzynierka.Services.Services
 {
@@ -20,12 +22,19 @@ namespace Inzynierka.Services.Services
         private readonly IMapper _mapper;
         private readonly IConfigurationManager _configurationManager;
         private readonly IEmailService _emailService;
-        public UserService(IRepository<User> usersRepository, IMapper mapper, IConfigurationManager configurationManager, IEmailService emailService)
+        private readonly IPictureService _pictureService;
+        private readonly IRepository<Motive> _motiveRepository;
+        private readonly IRepository<UserSetting> _userSettingsRepository;
+        public UserService(IRepository<Motive> motiveRepository,
+            IRepository<User> usersRepository, IPictureService pictureService, IRepository<UserSetting> userSettingsRepository, IMapper mapper, IConfigurationManager configurationManager, IEmailService emailService)
         {
             _usersRepository = usersRepository;
             _mapper = mapper;
             _configurationManager = configurationManager;
             _emailService = emailService;
+            _userSettingsRepository = userSettingsRepository;
+            _pictureService = pictureService;
+            _motiveRepository = motiveRepository;
 
         }
         private string GetHash(string text)
@@ -53,24 +62,32 @@ namespace Inzynierka.Services.Services
         {
             return GetHash(user.Username + user.Email);
         }
-        public ResultDto<LoginDto> Login(LoginViewModel loginModel)
+        public async Task<ResultDto<LoginDto>> Login(LoginViewModel loginModel)
         {
             var result = new ResultDto<LoginDto>();
-            var user = _usersRepository.GetBy(x => x.Username == loginModel.Username);
+            var user =  await Task.Run(() => _usersRepository.GetBy(x => x.Username == loginModel.Username, x => x.UserSetting, x => x.Motives));
 
             if (user == null || GetHash(loginModel.Password) != user.PasswordHash)
             {
-                result.Error = "Błędny login lub hasło";
+                result.Errors.Add("Błędny login lub hasło");
                 return result;
             }
 
             if (!user.IsAcceptedRegister)
             {
-                result.Error = "To konto nie zostało jeszcze aktywowane";
+                result.Errors.Add("To konto nie zostało jeszcze aktywowane");
                 return result;
             }
 
             var loginDto = _mapper.Map<LoginDto>(user);
+
+            var actualMotive = _userSettingsRepository.GetBy(x => x.UserId == user.Id, x => x.Motive);
+
+            if(actualMotive != null)
+            {
+                loginDto.UserSetting.MotiveDto = _mapper.Map<MotiveDto>(actualMotive.Motive);
+
+            }
 
             loginDto.Token = GetToken(user, "theKeyGeneratedToken",
                 "http://localhost:52535", DateTime.Now.AddDays(7));
@@ -80,19 +97,19 @@ namespace Inzynierka.Services.Services
             return result;
         }
 
-        public ResultDto<RegisterDto> Register(RegisterViewModel ViewModel)
+        public async Task<ResultDto<RegisterDto>> Register(RegisterViewModel ViewModel)
         {
             var result = new ResultDto<RegisterDto>();
 
             if(_usersRepository.Exist(x => x.Username == ViewModel.Username))
             {
-                result.Error = "Taki użytkownik już istnieje";
+                result.Errors.Add("Taki użytkownik już istnieje");
                 return result;
             }
 
             if(_usersRepository.Exist(x => x.Email == ViewModel.Email))
             {
-                result.Error = "Użytkownik o podanym adresie już istnieje";
+                result.Errors.Add("Użytkownik o podanym adresie już istnieje");
                 return result;
             }
 
@@ -101,38 +118,38 @@ namespace Inzynierka.Services.Services
             user.PasswordHash = GetHash(ViewModel.Password);
             user.CookiesActivateLink = GenerateActivationLink(user);
 
-            if (_usersRepository.Insert(user) == 0)
+            int isInserted = await _usersRepository.Insert(user);
+
+            if (isInserted == 0)
             {
-                result.Error = "Wystąpił błąd podczas zakładania konta";
+                result.Errors.Add("Wystąpił błąd podczas zakładania konta");
                 return result;
 
             }
 
-
-            result.SuccessResult = _mapper.Map<RegisterDto>(user);
-
-            _emailService.SendEmailAfterRegister(ViewModel.Email, user.CookiesActivateLink, "Potwierdzenie rejestracji", ViewModel.Username);
+            await _emailService.SendEmailAfterRegister(ViewModel.Email, user.CookiesActivateLink, 
+                "Potwierdzenie rejestracji", ViewModel.Username);
 
             return result;
         }
 
-        
-
-        public ResultDto<ActivateEmailDto> ConfirmRegister(string link)
+        public async Task<ResultDto<ActivateEmailDto>> ConfirmRegister(string link)
         {
             var result = new ResultDto<ActivateEmailDto>();
 
-            var user = _usersRepository.GetBy(x => x.CookiesActivateLink == link);
+            var user = await Task.Run(() =>
+                _usersRepository.GetBy(x => x.CookiesActivateLink == link)
+            );
 
             if (user == null)
             {
-                result.Error = "Nieprawidłowy link aktywacyjny";
+                result.Errors.Add("Nieprawidłowy link aktywacyjny");
                 return result;
             }
 
             if (user.IsAcceptedRegister)
             {
-                result.Error = "Te konto już zostało aktywowane";
+                result.Errors.Add("Te konto już zostało aktywowane");
                 return result;
             }
 
@@ -141,16 +158,175 @@ namespace Inzynierka.Services.Services
 
             if (_usersRepository.Update(user) == 0)
             {
-                result.Error = "Wystąpił błąd podczas procesu aktywacji konta";
+                result.Errors.Add("Wystąpił błąd podczas procesu aktywacji konta");
                 return result;
             }
 
-            var updatedUser = _usersRepository.GetBy(x => x.CookiesActivateLink == link);
+            var updatedUser = await Task.Run(() => _usersRepository.GetBy(x => x.CookiesActivateLink == link));
 
             result.SuccessResult = _mapper.Map<ActivateEmailDto>(updatedUser);
 
             return result;
         }
-       
+
+        public async Task<ResultDto<ReturnUserSettingsDto>> CreateSetting(ChangeUserSettingViewModel viewModel, int UserId)
+        {
+            var result = new ResultDto<ReturnUserSettingsDto>();
+
+            if (viewModel.MotiveId == null && viewModel.Avatar == null)
+            {
+                result.Errors.Add("Nie podano wymaganych wartości do utworzenia ustawienia");
+
+                return result;
+            }
+
+            bool isUserSettingAlreadyCreated = _userSettingsRepository.Exist(x => x.UserId == UserId);
+
+            if(isUserSettingAlreadyCreated)
+            {
+                result.Errors.Add("Ustawienia dla tego konta zostały już utworzone");
+
+                return result;
+            }
+
+            if(viewModel.MotiveId != null)
+            {
+                var isMotiveExist = _motiveRepository.Exist(x => x.Id == viewModel.MotiveId && x.UserId == UserId);
+
+                if (!isMotiveExist)
+                {
+                    result.Errors.Add("Motyw o podanych parametrach nie istnieje");
+
+                    return result;
+                }
+            }
+
+            var setting = _mapper.Map<ChangeUserSettingViewModel, UserSetting>(viewModel);
+            setting.UserId = UserId;
+
+            if(viewModel.Avatar != null)
+                setting.PathToAvatar = await _pictureService.SaveAvatar(UserId, viewModel.Avatar);
+
+            if(setting.PathToAvatar == null)
+            {
+                result.Errors.Add("Wystąpił błąd podczas dodawania zdjęcia");
+
+                return result;
+            }
+
+            int isInsertedCorrectly = await _userSettingsRepository.Insert(setting);
+
+            if (isInsertedCorrectly == 0)
+            {
+                result.Errors.Add("Wystąpił błąd podczas dodawania ustawień");
+
+                return result;
+            }
+
+            return result;
+        }
+
+        public async Task<ResultDto<ReturnUserSettingsDto>> ChangeSetting(ChangeUserSettingViewModel viewModel, int UserId)
+        {
+            var result = new ResultDto<ReturnUserSettingsDto>();
+
+            if (viewModel.MotiveId == null && viewModel.Avatar == null)
+            {
+                result.Errors.Add("Nie podano wymaganych wartości do utworzenia ustawienia");
+
+                return result;
+            }
+
+            var userSetting = _userSettingsRepository.GetBy(x => x.UserId == UserId);
+
+            if (userSetting == null)
+            {
+                result.Errors.Add("Brak stworzonego ustawienia dla tego konta. Najpierw utwórz nowe");
+
+                return result;
+            }
+
+            if(viewModel.MotiveId != null)
+            {
+                bool isMotiveExist = _motiveRepository.Exist(x => x.Id == viewModel.MotiveId);
+
+                if (!isMotiveExist)
+                {
+                    result.Errors.Add("Motyw o podanych parametrach nie istnieje");
+
+                    return result;
+                }
+            }
+
+            if (userSetting.MotiveId != viewModel.MotiveId)
+                userSetting.MotiveId = viewModel.MotiveId;
+
+            if(viewModel.Avatar != null)
+                userSetting.PathToAvatar = await _pictureService.SaveAvatar(UserId, viewModel.Avatar);
+
+            if (userSetting.PathToAvatar == null)
+            {
+                result.Errors.Add("Wystąpił błąd podczas dodawania zdjęcia profilowego");
+
+                return result;
+            }
+
+            int isUpdated = await Task.Run(() =>
+             _userSettingsRepository.Update(userSetting)
+            );
+
+            if (isUpdated == 0)
+            {
+                result.Errors.Add("Wystąpił błąd podczas aktualizacji ustawień");
+
+                return result;
+            }
+
+            return result;
+        }
+
+        public async Task<ResultDto<EmptyDto>> ChangeUserData(ChangeUserDataViewModel viewModel, int UserId)
+        {
+            var result = new ResultDto<EmptyDto>();
+
+            var user = _usersRepository.GetBy(x => x.Id == UserId);
+
+            if(viewModel.Username != null)
+            {
+                bool isOtherUserHaveTheSameUsername = _usersRepository.Exist(x => x.Username == viewModel.Username);
+                if (isOtherUserHaveTheSameUsername)
+                {
+                    result.Errors.Add("Ta nazwa użytkownika jest już zajęta");
+                    return result;
+                }
+            }
+
+            var newUser = _mapper.Map(viewModel, user);
+
+            if (viewModel.NewPassword != null && viewModel.OldPassword != null)
+            {
+                if(user.PasswordHash != GetHash(viewModel.OldPassword))
+                {
+                    result.Errors.Add("Stare hasło jest nieprawidłowe");
+                    return result;
+                }
+
+                if(user.PasswordHash == GetHash(viewModel.NewPassword))
+                {
+                    result.Errors.Add("Nowe hasło jest takie same jak stare");
+                    return result;
+                }
+
+
+                newUser.PasswordHash = GetHash(viewModel.NewPassword);
+            }
+
+            int isUpdated = await Task.Run(() => _usersRepository.Update(newUser));
+
+            if(isUpdated == 0)
+                result.Errors.Add("Wystapił błąd podczas zapisywania zmian");
+
+            return result;
+        }
     }
 }

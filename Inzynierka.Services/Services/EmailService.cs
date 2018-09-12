@@ -14,9 +14,8 @@ namespace Inzynierka.Services.Services
     {
         private readonly string EmailSender = "jaro1994elo@gmail.com";
         private readonly string fromPassword = "jaro1994";
-        public void SendEmailAfterRegister(string EmailAdress, string GeneratedLink, string Subject, string Username)
+        public async Task SendEmailAfterRegister(string EmailAdress, string GeneratedLink, string Subject, string Username)
         {
-
             MailAddress fromAddress = new MailAddress(EmailSender, fromPassword);
             MailAddress toAddress = new MailAddress(EmailAdress);
             
@@ -40,7 +39,7 @@ namespace Inzynierka.Services.Services
             body.AppendFormat("Link: {0}", link + GeneratedLink);
             message.Body = body.ToString();
 
-            smtp.Send(message);
+            await smtp.SendMailAsync(message);
         }
     }
 }

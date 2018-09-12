@@ -3,13 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27703.2026
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Inzynierka.API", "Inzynierka.API\Inzynierka.API.csproj", "{46EDF5A3-2B43-4D3A-B387-4C4650DB271D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Inzynierka.API", "Inzynierka.API\Inzynierka.API.csproj", "{46EDF5A3-2B43-4D3A-B387-4C4650DB271D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Inzynierka.Repository", "Inzynierka.Repository\Inzynierka.Repository.csproj", "{0A773C6E-1FF6-4395-AEA4-90F075FE1DD1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Inzynierka.Repository", "Inzynierka.Repository\Inzynierka.Repository.csproj", "{0A773C6E-1FF6-4395-AEA4-90F075FE1DD1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Inzynierka.Services", "Inzynierka.Services\Inzynierka.Services.csproj", "{C367EDE6-5F44-4726-A13E-CF842364CE5E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Inzynierka.Services", "Inzynierka.Services\Inzynierka.Services.csproj", "{C367EDE6-5F44-4726-A13E-CF842364CE5E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Inzynierka.Data", "Inzynierka.Data\Inzynierka.Data.csproj", "{E9880DB5-8177-45CC-B489-1525CC557E51}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Inzynierka.Data", "Inzynierka.Data\Inzynierka.Data.csproj", "{E9880DB5-8177-45CC-B489-1525CC557E51}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

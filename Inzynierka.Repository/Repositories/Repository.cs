@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
-
+using System.Threading.Tasks;
 
 namespace Inzynierka.Repository.Repositories
 {
@@ -20,19 +20,38 @@ namespace Inzynierka.Repository.Repositories
             _dbContext = context;
             _dbSet = _dbContext.Set<T>();
         }
-        public int Insert(T entity)
+        public async Task<int> Insert(T entity)
         {
             if (entity == null)
                 throw new ArgumentNullException("entity");
             
             entity.ModifiedDate = entity.CreationDate = DateTime.Now;
-            _dbSet.Add(entity);
-            return _dbContext.SaveChanges();
+            await _dbSet.AddAsync(entity);
+            return await _dbContext.SaveChangesAsync();
+        }
+
+        public async Task<T> InsertAndReturnObject(T entity)
+        {
+            if (entity == null)
+                throw new ArgumentNullException("entity");
+
+            entity.ModifiedDate = entity.CreationDate = DateTime.Now;
+            await _dbSet.AddAsync(entity);
+            await _dbContext.SaveChangesAsync();
+            return entity;
         }
 
         public bool Exist(Expression<Func<T, bool>> expression)
         {
             return _dbSet.Any(expression);
+        }
+
+        public T GetByWithRelatedInclude(Expression<Func<T, bool>> getBy, Expression<Func<T, object>> include, 
+            Expression<Func<object, object>> thenInclude)
+        {
+            IQueryable<T> query = _dbSet;
+
+            return query.Include(include).ThenInclude(thenInclude).FirstOrDefault(getBy);
         }
 
         public T GetBy(Expression<Func<T, bool>> getBy, params Expression<Func<T, object>>[] includes)
@@ -43,6 +62,27 @@ namespace Inzynierka.Repository.Repositories
                 query = query.Include(include);
             }
             return query.FirstOrDefault(getBy);
+        }
+
+        public IQueryable<T> GetAllBy(Expression<Func<T, bool>> getBy, params Expression<Func<T, object>>[] includes)
+        {
+            IQueryable<T> query = _dbSet;
+            foreach(var include in includes)
+            {
+                query = query.Include(include);
+            }
+            return query.Where(getBy);
+        }
+
+        public IQueryable<T> GetAll(params Expression<Func<T, object>>[] includes)
+        {
+            IQueryable<T> query = _dbSet;
+            foreach (var include in includes)
+            {
+                query = query.Include(include);
+            }
+
+            return query;
         }
 
         public int Update(T entity)
@@ -56,6 +96,25 @@ namespace Inzynierka.Repository.Repositories
             return _dbContext.SaveChanges();
         }
 
-       
+        public async Task LoadRelatedCollectionThenIncludeCollection<TInclude, TIncluded, TThenInclude>(T entity, Expression<Func<T, IEnumerable<TInclude>>> collection,
+            Expression<Func<TInclude, TIncluded>> include, Expression<Func<TIncluded, IEnumerable<TThenInclude>>> thenInclude)
+            where TInclude : Entity where TThenInclude : Entity where TIncluded : Entity
+        {
+            await _dbContext.Entry(entity).Collection(collection).Query().Include(include).ThenInclude(thenInclude).LoadAsync();
+
+        }
+
+        public int Delete(Expression<Func<T, bool>> expression)
+        {
+            var entity = _dbSet.SingleOrDefault(expression);
+            if (entity == null)
+            {
+                throw new NullReferenceException();
+            }
+            _dbSet.Remove(entity);
+            return _dbContext.SaveChanges();
+        }
+
+
     }
 }

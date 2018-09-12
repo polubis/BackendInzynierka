@@ -21,6 +21,8 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Text;
 using Microsoft.IdentityModel.Protocols;
+using Microsoft.Extensions.FileProviders;
+using System.IO;
 
 namespace Inzynierka.API
 {
@@ -36,6 +38,8 @@ namespace Inzynierka.API
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            
+
             services.AddMvc();
             services.AddAuthentication(options =>
             {
@@ -64,7 +68,12 @@ namespace Inzynierka.API
                     Description = "My First ASP.NET Core 2.0 Web API",
                     TermsOfService = "None"
                 });
+                c.AddSecurityDefinition("Bearer", new ApiKeyScheme { In = "header", Description = "Please enter JWT with Bearer into field", Name = "Authorization", Type = "apiKey" });
+                c.AddSecurityRequirement(new Dictionary<string, IEnumerable<string>> {
+                { "Bearer", Enumerable.Empty<string>() },
+                });
             });
+
             services.AddDbContext<ApplicationDbContext>(options => 
             options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
             services.AddSingleton<IConfigurationManager, ConfigurationManager>();
@@ -72,7 +81,10 @@ namespace Inzynierka.API
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             services.AddTransient<IUserService, UserService>();
             services.AddTransient<IEmailService, EmailService>();
-            
+            services.AddTransient<ISoundService, SoundService>();
+            services.AddTransient<IQuizService, QuizService>();
+            services.AddTransient<IPictureService, PictureService>();
+            services.AddTransient<IMotiveService, MotiveService>();
         }
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Inzynierka.Data.DbModels
 {
-    public class User:Entity
+    public class User : Entity
     {
         [Required]
         public string Username { get; set; }
@@ -24,7 +24,16 @@ namespace Inzynierka.Data.DbModels
         [Required]
         public string CookiesActivateLink { get; set; }
 
+        public virtual ICollection<Sound> Sounds { get; set; }
 
+        public virtual ICollection<Quiz> Quizes { get; set; }
+        public virtual Rate Rate { get; set; }
+        public virtual UserSetting UserSetting { get; set; }
+
+        public virtual ICollection<Motive> Motives { get; set; }
+
+        public virtual ICollection<SharedMotives> SharedMotives { get; set; }
+        // lista motyw
 
     }
 }

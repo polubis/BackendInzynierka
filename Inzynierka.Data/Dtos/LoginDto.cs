@@ -13,5 +13,9 @@ namespace Inzynierka.Data.Dtos
         public string Email { get; set; }
         public DateTime? BirthDate { get; set; }
         public bool Sex { get; set; }
+
+        public UserSettingsDto UserSetting { get; set; }
+        public List<MotiveDto> Motives { get; set; }
+        
     }
 }

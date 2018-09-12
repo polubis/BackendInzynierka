@@ -7,6 +7,6 @@ namespace Inzynierka.Services.Interfaces
 {
     public interface IEmailService
     {
-        void SendEmailAfterRegister(string EmailAdress, string GeneratedLink, string Subject, string Username);
+        Task SendEmailAfterRegister(string EmailAdress, string GeneratedLink, string Subject, string Username);
     }
 }

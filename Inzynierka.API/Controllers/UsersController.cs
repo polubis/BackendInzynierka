@@ -1,12 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Inzynierka.Data.ViewModels;
 using Inzynierka.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-
 namespace Inzynierka.API.Controllers
 {
     [Produces("application/json")]
@@ -14,22 +13,45 @@ namespace Inzynierka.API.Controllers
     public class UsersController : Controller
     {
         private readonly IUserService _userService;
-        public UsersController(IUserService userService)
+        private readonly IPictureService _pictureService;
+        public UsersController(IUserService userService, IPictureService pictureService)
         {
             _userService = userService;
+            _pictureService = pictureService;
         }
 
-        [AllowAnonymous]
-        [HttpPost("register")]
-        public IActionResult Register([FromBody]RegisterViewModel registerModel)
+        [Authorize]
+        [HttpPatch("changeuserdata")]
+        public async Task<IActionResult> ChangeUserData([FromBody]ChangeUserDataViewModel viewModel)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-            var result = _userService.Register(registerModel);
 
-            if (result.Error != null)
+            int userId = Convert.ToInt32(User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Sid).Value);
+
+            var result = await _userService.ChangeUserData(viewModel, userId);
+
+            if(result.IsError)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+
+        [AllowAnonymous]
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody]RegisterViewModel registerModel)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var result = await _userService.Register(registerModel);
+
+            if (result.IsError)
             {
                 return BadRequest(result);
             }
@@ -39,16 +61,16 @@ namespace Inzynierka.API.Controllers
 
         [AllowAnonymous]
         [HttpPost("login")]
-        public IActionResult Login([FromBody] LoginViewModel loginViewModel)
+        public async Task<IActionResult> Login([FromBody] LoginViewModel loginViewModel)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var result = _userService.Login(loginViewModel);
+            var result = await _userService.Login(loginViewModel);
 
-            if(result.Error != null)
+            if (result.IsError)
             {
                 return BadRequest(result);
             }
@@ -58,11 +80,11 @@ namespace Inzynierka.API.Controllers
 
         [AllowAnonymous]
         [HttpPost("register/activate/{link}")]
-        public IActionResult ActivateAccount(string link)
+        public async Task<IActionResult> ActivateAccount(string link)
         {
-            var result = _userService.ConfirmRegister(link);
+            var result = await _userService.ConfirmRegister(link);
 
-            if(result.Error != null)
+            if (result.IsError)
             {
                 return BadRequest(result);
             }
@@ -71,7 +93,45 @@ namespace Inzynierka.API.Controllers
 
         }
 
-     
+        [Authorize]
+        [HttpPut("setting")]
+        public async Task<IActionResult> ChangeSetting([FromForm] ChangeUserSettingViewModel viewModel)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            int userId = Convert.ToInt32(User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Sid).Value);
+
+            var result = await _userService.ChangeSetting(viewModel, userId);
+
+            if (result.IsError)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+
+        [Authorize]
+        [HttpPost("setting")]
+        public async Task<IActionResult> CreateSetting([FromForm] ChangeUserSettingViewModel viewModel)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            int userId = Convert.ToInt32(User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Sid).Value);
+
+            var result = await _userService.CreateSetting(viewModel, userId);
+
+            if (result.IsError)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
 
     }
 }
