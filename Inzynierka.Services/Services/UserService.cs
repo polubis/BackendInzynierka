@@ -45,6 +45,13 @@ namespace Inzynierka.Services.Services
                 return BitConverter.ToString(hashedBytes).Replace("-", "").ToLower();
             }
         }
+
+        public async Task<ResultDto<UsersDetailsDto>> GetUsers(int limit, int page, string search)
+        {
+            var result = new ResultDto<UsersDetailsDto>();
+            // Dokonczyc sciaganie szczegolow, wszystkich userow oraz dodac zmiane emaila
+            return result;
+        }
         private string GetToken(User user, string secretKey, string issuer, DateTime? expirationDate = null)
         {
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
@@ -62,6 +69,8 @@ namespace Inzynierka.Services.Services
         {
             return GetHash(user.Username + user.Email);
         }
+
+
         public async Task<ResultDto<LoginDto>> Login(LoginViewModel loginModel)
         {
             var result = new ResultDto<LoginDto>();
@@ -299,6 +308,11 @@ namespace Inzynierka.Services.Services
                     result.Errors.Add("Ta nazwa użytkownika jest już zajęta");
                     return result;
                 }
+            }
+
+            if(viewModel.Email != null)
+            {
+                // Tutaj zaimplementowac zmiane emaila
             }
 
             var newUser = _mapper.Map(viewModel, user);

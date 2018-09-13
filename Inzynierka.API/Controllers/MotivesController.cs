@@ -16,8 +16,6 @@ using Microsoft.AspNetCore.Mvc;
 // Poprawic rejestracje -> jak wyrznie sie email to usunac utworzone konto
 // Stworzyc grupy, przypisywanie do grup,
 // Stworzyc posty w grupach i chat
-// Przetestowac jeszcze raz tworzenie quizow 
-// Popracowac na systemem oceniania
 // Stworzyc wyszukiwarke uzytkownikow
 
 

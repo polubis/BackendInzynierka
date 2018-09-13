@@ -75,10 +75,17 @@ namespace Inzynierka.API.Controllers
         }
 
         [Authorize]
-        [HttpGet("results/all")]
-        public async Task<IActionResult> GetAllResults()
+        [HttpGet("results/{limit}/{page}")]
+        public async Task<IActionResult> GetAllRates(int limit, int page)
         {
-            return Ok();
+            var result = await _quizService.GetAllResults(limit, page);
+
+            if (result.IsError)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
         }
     }
 }

@@ -18,5 +18,8 @@ namespace Inzynierka.Services.Interfaces
         Task<ResultDto<ReturnUserSettingsDto>> CreateSetting(ChangeUserSettingViewModel viewModel, int UserId);
 
         Task<ResultDto<EmptyDto>> ChangeUserData(ChangeUserDataViewModel viewModel, int userId);
+        Task<ResultDto<UsersDetailsDto>> GetUsers(int limit, int page, string search);
+
+
     }
 }

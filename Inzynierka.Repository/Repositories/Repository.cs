@@ -115,6 +115,34 @@ namespace Inzynierka.Repository.Repositories
             return _dbContext.SaveChanges();
         }
 
+        public IEnumerable<T> GetAllByWithLimit(Expression<Func<T, bool>> getBy, Expression<Func<T, object>> orderByDescending,
+            Expression<Func<T, object>> orderByAscending,
+            int limit, int skip, params Expression<Func<T, object>>[] includes)
+        {
+            IQueryable<T> query = _dbSet;
+
+            foreach (var include in includes)
+            {
+                query = query.Include(include);
+            }
+
+            if(getBy != null)
+                query = query.Where(getBy);
+            
+            if(orderByAscending != null)
+                query = query.OrderBy(orderByAscending);
+
+            if (orderByDescending != null)
+                query = query.OrderByDescending(orderByDescending);
+
+            if(query.Count() < limit)
+            {
+                return query;
+            }
+
+            return query.Skip((skip-1) * limit).Take(limit);
+        }
+
 
     }
 }

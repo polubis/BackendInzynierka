@@ -12,5 +12,7 @@ namespace Inzynierka.Services.Interfaces
         Task<ResultDto<CreateQuizDto>> CreateQuiz(CreateQuizViewModel viewModel, int userId);
         Task<ResultDto<GetResultDto>> GetResultsForUser(int userId);
         Task<ResultDto<GetQuestionsByQuizDto>> GetQuestionsFromQuiz(int quizId, int userId);
+        Task<ResultDto<RatesDto>> GetAllResults(int limit, int page);
+
     }
 }

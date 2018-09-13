@@ -21,6 +21,25 @@ namespace Inzynierka.API.Controllers
         }
 
         [Authorize]
+        [HttpGet("{limit}/{page}/{search}")]
+        public async Task<IActionResult> GetUsers(int limit, int page, string search)
+        {
+            var result = _userService.GetUsers(limit, page, search);
+
+            
+            return Ok(result);
+        }
+
+        [Authorize]
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetUserDetails()
+        {
+
+            return Ok();
+        }
+
+
+        [Authorize]
         [HttpPatch("changeuserdata")]
         public async Task<IActionResult> ChangeUserData([FromBody]ChangeUserDataViewModel viewModel)
         {

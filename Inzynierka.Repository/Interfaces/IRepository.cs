@@ -21,5 +21,9 @@ namespace Inzynierka.Repository.Interfaces
         T GetByWithRelatedInclude(Expression<Func<T, bool>> getBy, Expression<Func<T, object>> include,
            Expression<Func<object, object>> thenInclude);
         int Delete(Expression<Func<T, bool>> expression);
+
+        IEnumerable<T> GetAllByWithLimit(Expression<Func<T, bool>> getBy, Expression<Func<T, object>> orderByDescending,
+            Expression<Func<T, object>> orderByAscending,
+            int limit, int skip, params Expression<Func<T, object>>[] includes);
     }
 }

@@ -38,6 +38,33 @@ namespace Inzynierka.Services.Services
             _questionRepository = questionRepository;
         }
 
+        public async Task<ResultDto<RatesDto>> GetAllResults(int limit, int page)
+        {
+            var result = new ResultDto<RatesDto>();
+
+            var rates = await Task.Run(() =>
+                _rateRepository.GetAllByWithLimit(null, x => x.PointsForAllGames, null, limit, page, x => x.User));
+
+            if(rates.Count() == 0)
+            {
+                result.Errors.Add("Nie prawidłowe parametry filtrowania");
+                return result;
+            }
+
+            var ratesDto = new RatesDto();
+            var mappedRates = _mapper.Map<List<Rate>, List<RateDto>>(rates.ToList());
+
+            for(int i = 0; i < rates.Count(); i++)
+            {
+                mappedRates[i].User = _mapper.Map<User, UserDto>(rates.ElementAt(i).User);
+            }
+
+            ratesDto.Rates = mappedRates;
+            result.SuccessResult = ratesDto;
+
+            return result;
+        }
+
         public async Task<ResultDto<GetQuestionsByQuizDto>> GetQuestionsFromQuiz(int quizId, int userId)
         {
             var result = new ResultDto<GetQuestionsByQuizDto>();
