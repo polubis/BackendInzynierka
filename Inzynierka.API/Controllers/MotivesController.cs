@@ -9,10 +9,7 @@ using Inzynierka.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-// Dodac udostepnianie globalne, sprobowac zrobic usuwanie motywow kaskadowe
-// Dodac sciaganie listy wszystkich motywow dostepnych dla usera
-// Dodac sciaganie listy motywow globalnych.
-// Dodac dodawanie motywu globalne
+// sprobowac zrobic usuwanie motywow kaskadowe
 // Stworzyc usuwanie konta uzytkownia
 // Stworzyc dodawanie utworow, sciaganie, usuwanie 
 // Popracowac nad dodawaniem zdjec avatara bo cos jest tam nie tak
@@ -21,7 +18,7 @@ using Microsoft.AspNetCore.Mvc;
 // Stworzyc posty w grupach i chat
 // Przetestowac jeszcze raz tworzenie quizow 
 // Popracowac na systemem oceniania
-
+// Stworzyc wyszukiwarke uzytkownikow
 
 
 namespace Inzynierka.API.Controllers
@@ -95,7 +92,7 @@ namespace Inzynierka.API.Controllers
         }
 
         [Authorize]
-        [HttpGet("share/{userToShareId}/{motiveId}")]
+        [HttpPut("share/{userToShareId}/{motiveId}")]
         public async Task<IActionResult> ShareMotive(int userToShareId, int motiveId)
         {
             int userWhichSharingId = Convert.ToInt32(User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Sid).Value);
@@ -109,5 +106,39 @@ namespace Inzynierka.API.Controllers
 
             return Ok(result);
         }
+
+        [Authorize]
+        [HttpPut("share/{motiveId}/{state}")]
+        public async Task<IActionResult> ChangeShareGloballyState(int motiveId, bool state)
+        {
+            int userId = Convert.ToInt32(User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Sid).Value);
+
+            var result = await _motiveService.ChangeShareGloballyState(userId, motiveId, state);
+
+            if (result.IsError)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+
+        [Authorize]
+        [HttpGet("{type}")]
+        public async Task<IActionResult> Motives(string type)
+        {
+            int userId = Convert.ToInt32(User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Sid).Value);
+
+            var result = await _motiveService.GetMotivesBy(userId, type);
+
+            if (result.IsError)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+
+
     }
 }

@@ -13,5 +13,9 @@ namespace Inzynierka.Services.Interfaces
         Task<ResultDto<MotiveDto>> EditMotive(MotiveViewModel viewModel, int motiveId, int UserId);
         Task<ResultDto<MotiveDto>> DeleteMotive(int motiveId, int UserId);
         Task<ResultDto<MotiveDto>> ShareMotive(int userToShareId, int userWhichSharingId, int motiveId);
+        Task<ResultDto<MotiveDto>> ChangeShareGloballyState(int userId, int motiveId, bool shouldShareGlobally);
+
+        Task<ResultDto<GetMotivesDto>> GetMotivesBy(int userId, string type);
+
     }
 }

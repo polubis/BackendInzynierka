@@ -10,7 +10,7 @@ namespace Inzynierka.Services.Interfaces
     public interface IQuizService
     {
         Task<ResultDto<CreateQuizDto>> CreateQuiz(CreateQuizViewModel viewModel, int userId);
-        Task<ResultDto<GetResultDto>> GetResults(int userId);
-        Task<ResultDto<GetQuestionsByQuizDto>> GetQuestionsFromQuiz(int quizId);
+        Task<ResultDto<GetResultDto>> GetResultsForUser(int userId);
+        Task<ResultDto<GetQuestionsByQuizDto>> GetQuestionsFromQuiz(int quizId, int userId);
     }
 }

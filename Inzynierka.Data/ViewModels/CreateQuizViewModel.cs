@@ -13,9 +13,6 @@ namespace Inzynierka.Data.ViewModels
         public string QuizType { get; set; }
 
         [Required]
-        public int SecondsSpendOnQuiz { get; set; }
-
-        [Required]
         public int NumberOfPositiveRates { get; set; }
 
         [Required]

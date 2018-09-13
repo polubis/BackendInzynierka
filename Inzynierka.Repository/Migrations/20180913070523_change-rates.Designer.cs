@@ -11,9 +11,10 @@ using System;
 namespace Inzynierka.Repository.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20180913070523_change-rates")]
+    partial class changerates
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -57,8 +58,6 @@ namespace Inzynierka.Repository.Migrations
                     b.Property<string>("Answer")
                         .IsRequired();
 
-                    b.Property<bool>("AnsweredBeforeSugestion");
-
                     b.Property<string>("CorrectAnswer")
                         .IsRequired();
 
@@ -71,6 +70,8 @@ namespace Inzynierka.Repository.Migrations
                     b.Property<int>("QuizId");
 
                     b.Property<int>("TimeForAnswerInSeconds");
+
+                    b.Property<bool>("WasAnswerCorrect");
 
                     b.HasKey("Id");
 
@@ -92,7 +93,8 @@ namespace Inzynierka.Repository.Migrations
 
                     b.Property<int>("NumberOfPositiveRates");
 
-                    b.Property<double>("PointsForGame");
+                    b.Property<double?>("PointsForGame")
+                        .IsRequired();
 
                     b.Property<string>("QuizType")
                         .IsRequired();
@@ -123,7 +125,8 @@ namespace Inzynierka.Repository.Migrations
 
                     b.Property<int>("NumberOfPlayedGames");
 
-                    b.Property<double>("PointsForAllGames");
+                    b.Property<double?>("PointsForAllGames")
+                        .IsRequired();
 
                     b.Property<int>("UserId");
 

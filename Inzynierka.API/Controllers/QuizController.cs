@@ -43,11 +43,11 @@ namespace Inzynierka.API.Controllers
 
         [Authorize]
         [HttpGet("results")]
-        public async Task<IActionResult> GetResults()
+        public async Task<IActionResult> GetResultsForUser()
         {
             int userId = Convert.ToInt32(User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Sid).Value);
 
-            var result = await _quizService.GetResults(userId);
+            var result = await _quizService.GetResultsForUser(userId);
 
             if (result.IsError)
             {
@@ -59,10 +59,12 @@ namespace Inzynierka.API.Controllers
         }
 
         [Authorize]
-        [HttpGet("{id}/questions")]
-        public async Task<IActionResult> GetQuestionsFromQuiz(int id)
+        [HttpGet("{quizId}/questions")]
+        public async Task<IActionResult> GetQuestionsFromQuiz(int quizId)
         {
-            var result = await _quizService.GetQuestionsFromQuiz(id);
+            int userId = Convert.ToInt32(User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Sid).Value);
+
+            var result = await _quizService.GetQuestionsFromQuiz(quizId, userId);
 
             if (result.IsError)
             {
@@ -70,6 +72,13 @@ namespace Inzynierka.API.Controllers
             }
 
             return Ok(result);
+        }
+
+        [Authorize]
+        [HttpGet("results/all")]
+        public async Task<IActionResult> GetAllResults()
+        {
+            return Ok();
         }
     }
 }

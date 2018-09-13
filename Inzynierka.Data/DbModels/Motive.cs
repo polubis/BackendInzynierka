@@ -21,6 +21,8 @@ namespace Inzynierka.Data.DbModels
         [Required]
         public int UserId { get; set; }
 
+        public bool? IsSharedGlobally { get; set; }
+
         public UserSetting UserSetting { get; set; }
         public virtual ICollection<SharedMotives> SharedMotives { get; set; }
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -142,6 +143,94 @@ namespace Inzynierka.Services.Services
             return result;
         }
 
-        // Share motywow/ pobieranie share motywow
+        public async Task<ResultDto<MotiveDto>> ChangeShareGloballyState(int userId, int motiveId, bool shouldShareGlobally)
+        {
+            var result = new ResultDto<MotiveDto>();
+
+            var motive = _motiveRepository.GetBy(x => x.Id == motiveId && x.UserId == userId);
+
+            if(motive == null)
+            {
+                result.Errors.Add("Motyw o podanych parametrach nie istnieje");
+                return result;
+            }
+
+            motive.IsSharedGlobally = shouldShareGlobally;
+
+            int IsUpdated = await Task.Run(() => _motiveRepository.Update(motive));
+
+            if(IsUpdated == 0)
+            {
+                result.Errors.Add("Wystąpił problem podczas zmiany globalnego statusu udostępnienia");
+            }
+
+            return result;
+        }
+        
+        public async Task<ResultDto<GetMotivesDto>> GetMotivesBy(int userId, string type)
+        {
+            var result = new ResultDto<GetMotivesDto>();
+            var motivesDto = new GetMotivesDto();
+
+            if(type == "global")
+            {
+                var motives = await Task.Run(() => 
+                    _motiveRepository.GetAllBy(x => x.IsSharedGlobally == true, 
+                    x => x.User).OrderBy(x => x.Name).ToList());
+
+                if(motives == null)
+                {
+                    result.Errors.Add("Wystąpił błąd podczas pobierania listy motywów dla kategorii " + type);
+                    return result;
+                }
+                motivesDto.GetMotivesDtoList = _mapper.Map<List<Motive>, List<GetMotiveDto>>(motives);
+                for(int i = 0; i < motivesDto.GetMotivesDtoList.Count; i++)
+                {
+                    motivesDto.GetMotivesDtoList.ElementAt(i).CreatedBy = _mapper.Map<User, UserDto>(motives.ElementAt(i).User);
+                }
+
+            }
+
+            if(type == "user")
+            {
+                var motives = await Task.Run(() => 
+                    _motiveRepository.GetAllBy(x => x.UserId == userId).OrderBy(x => x.Name).ToList());
+
+                if(motives == null)
+                {
+                    result.Errors.Add("Wystąpił błąd podczas pobierania listy motywów dla kategorii " + type);
+                    return result;
+                }
+
+                motivesDto.GetMotivesDtoList = _mapper.Map<List<Motive>, List<GetMotiveDto>>(motives);
+            }
+
+            if(type == "shared")
+            {
+                var sharedMotives = await Task.Run(() => 
+                    _sharedMotivesRepository.GetAllBy(x => x.UserId == userId, x => x.Motive, x => x.Motive.User).
+                    OrderBy(x => x.Motive.Name).ToList());
+
+                if(sharedMotives == null)
+                {
+                    result.Errors.Add("Wystąpił błąd podczas pobierania listy motywów dla kategorii " + type);
+                    return result;
+                }
+
+                var motives = new List<GetMotiveDto>();
+
+                foreach(var sharedMotive in sharedMotives)
+                {
+                    var mappedMotive = _mapper.Map<Motive, GetMotiveDto>(sharedMotive.Motive);
+                    mappedMotive.CreatedBy = _mapper.Map<User, UserDto>(sharedMotive.Motive.User);
+                    motives.Add(mappedMotive);
+                }
+                motivesDto.GetMotivesDtoList = motives;
+            }
+            result.SuccessResult = motivesDto;
+
+            return result;
+        }
+
     }
 }

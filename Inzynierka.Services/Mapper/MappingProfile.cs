@@ -27,8 +27,9 @@ namespace Inzynierka.Services.Mapper
             CreateMap<Motive, MotiveDto>();
             CreateMap<MotiveViewModel, Motive>();
             CreateMap<ChangeUserDataViewModel, User>().
-                ForAllMembers(opts => opts.Condition((src, dest, srcUser) => srcUser != null)); ;
-
+                ForAllMembers(opts => opts.Condition((src, dest, srcUser) => srcUser != null));
+            CreateMap<Motive, GetMotiveDto>();
+            CreateMap<User, UserDto>();
         }
     }
 }

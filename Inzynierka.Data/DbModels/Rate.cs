@@ -18,6 +18,9 @@ namespace Inzynierka.Data.DbModels
 
         [Required]
         public double CurrentPercentageRate { get; set; }
+
+        [Required]
+        public double PointsForAllGames { get; set; }
     
     }
 }

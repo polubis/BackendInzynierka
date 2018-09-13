@@ -23,6 +23,9 @@ namespace Inzynierka.Data.DbModels
         public double RateInNumber { get; set; }
 
         [Required]
+        public double PointsForGame { get; set; }
+
+        [Required]
         public virtual User User { get; set; }
 
         [Required]

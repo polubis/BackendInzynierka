@@ -17,16 +17,16 @@ namespace Inzynierka.Data.DbModels
         public string Answer { get; set; }
 
         [Required]
-        public bool WasAnswerCorrect { get; set; }
-
+        public bool AnsweredBeforeSugestion { get; set; }
 
         [Required]
         public int TimeForAnswerInSeconds { get; set; }
 
         [Required]
-        public virtual Quiz Quiz { get; set; }
+        public double PointsForQuestion { get; set; }
 
-        // Dodac requesty od obslugi interwalow 
+        [Required]
+        public virtual Quiz Quiz { get; set; }
 
     }
 }
