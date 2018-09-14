@@ -13,6 +13,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using System.IO;
+using System.Linq;
+using Inzynierka.Data.HelpModels;
 
 namespace Inzynierka.Services.Services
 {
@@ -25,8 +27,15 @@ namespace Inzynierka.Services.Services
         private readonly IPictureService _pictureService;
         private readonly IRepository<Motive> _motiveRepository;
         private readonly IRepository<UserSetting> _userSettingsRepository;
+        private readonly IRepository<SharedMotives> _sharedMotivesRepository;
+        private readonly EmailConfig EmailConfig = new EmailConfig();
+        private readonly IRepository<UserChangingEmail> _usersChangingEmailRepository;
         public UserService(IRepository<Motive> motiveRepository,
-            IRepository<User> usersRepository, IPictureService pictureService, IRepository<UserSetting> userSettingsRepository, IMapper mapper, IConfigurationManager configurationManager, IEmailService emailService)
+            IRepository<User> usersRepository, IPictureService pictureService, 
+            IRepository<UserSetting> userSettingsRepository, 
+            IRepository<SharedMotives> sharedMotivesRepository,
+            IRepository<UserChangingEmail> usersChangingEmailRepository,
+            IMapper mapper, IConfigurationManager configurationManager, IEmailService emailService)
         {
             _usersRepository = usersRepository;
             _mapper = mapper;
@@ -35,6 +44,8 @@ namespace Inzynierka.Services.Services
             _userSettingsRepository = userSettingsRepository;
             _pictureService = pictureService;
             _motiveRepository = motiveRepository;
+            _usersChangingEmailRepository = usersChangingEmailRepository;
+            _sharedMotivesRepository = sharedMotivesRepository;
 
         }
         private string GetHash(string text)
@@ -46,10 +57,59 @@ namespace Inzynierka.Services.Services
             }
         }
 
-        public async Task<ResultDto<UsersDetailsDto>> GetUsers(int limit, int page, string search)
+        public async Task<ResultDto<UsersDetailsDto>> GetUsers(int limit, int page, string search, int userId)
         {
             var result = new ResultDto<UsersDetailsDto>();
-            // Dokonczyc sciaganie szczegolow, wszystkich userow oraz dodac zmiane emaila
+
+            IEnumerable<User> users;
+
+            if(search == "")
+            {
+                users = await Task.Run(() => _usersRepository.GetAllByWithLimit(x => x.Id != userId, x => x.Username,
+                null, limit, page, x => x.Rate, x => x.Quizes));
+            }
+            else
+            {
+                users = await Task.Run(() => _usersRepository.GetAllByWithLimit(x => x.Id != userId &&
+                    x.Username.Contains(search), x => x.Username,
+                    null, limit, page, x => x.Rate, x => x.Quizes));
+            }
+
+            if(users.Count() == 0)
+            {
+                result.Errors.Add("Brak wyników dla podanych parametrów");
+                return result;
+            }
+
+            var userDetailsDto = new UsersDetailsDto();
+            var mappedDetails = _mapper.Map<List<User>, List<UserDetailsDto>>(users.ToList());
+
+
+            bool? IsShared = true;
+
+            for(int i = 0; i < mappedDetails.Count; i++)
+            {
+                var motives = await Task.Run(() => _motiveRepository.GetAllBy(x => x.IsSharedGlobally == IsShared && x.UserId ==
+                    mappedDetails[i].Rate.User.Id).ToList());
+
+                mappedDetails[i].Motives = _mapper.Map<List<Motive>, List<MotiveDto>>(motives);
+
+                var sharedMotives = await Task.Run(() => _sharedMotivesRepository.GetAllBy(x => x.UserId == userId, x => x.Motive).ToList());
+
+                var listOfSharedMotives = new List<MotiveDto>();
+
+                for(int j = 0; j < sharedMotives.Count(); j++)
+                {
+                    var mappedSharedMotive = _mapper.Map<Motive, MotiveDto>(sharedMotives.ElementAt(j).Motive);
+                    listOfSharedMotives.Add(mappedSharedMotive);
+                }
+
+                mappedDetails[i].SharedMotivesForLoggedUser = listOfSharedMotives;
+            }
+
+            userDetailsDto.Details = mappedDetails;
+            result.SuccessResult = userDetailsDto;
+
             return result;
         }
         private string GetToken(User user, string secretKey, string issuer, DateTime? expirationDate = null)
@@ -106,6 +166,83 @@ namespace Inzynierka.Services.Services
             return result;
         }
 
+        public async Task<ResultDto<ChangeEmailDto>> ChangeEmail(ChangeEmailViewModel viewModel, int userId)
+        {
+            var result = new ResultDto<ChangeEmailDto>();
+
+            var user = _usersRepository.GetBy(x => x.Id == userId);
+
+            if(user == null)
+            {
+                result.Errors.Add("Użytkownik o podanych parametrach nie istnieje");
+                return result;
+            }
+
+            if(user.PasswordHash != GetHash(viewModel.CurrentPassword) || 
+                user.Email != viewModel.OldEmailAdress)
+            {
+                result.Errors.Add("Wprowadzono nieprawidłowe dane dotyczące zmiany adresu email");
+                return result;
+            }
+
+            bool isUserWithGivenEmailExist = _usersRepository.Exist(x => x.Email == viewModel.NewEmailAdress);
+
+            if (isUserWithGivenEmailExist)
+            {
+                result.Errors.Add("Użytkownik o podanym adresie mailowym już istnieje");
+                return result;
+            }
+
+            var userChangingEmail = _usersChangingEmailRepository.GetBy(x => x.UserId == userId);
+            var userChangingEmailModel = new UserChangingEmail();
+            userChangingEmailModel.UserId = userId;
+            userChangingEmailModel.Email = viewModel.NewEmailAdress;
+
+            if (userChangingEmail == null)
+            {
+                int isInsertedChangingEmail = await _usersChangingEmailRepository.Insert(userChangingEmailModel);
+                if (isInsertedChangingEmail == 0)
+                {
+                    result.Errors.Add("Wystąpił problem podczas zmiany adresu mailowego");
+                    return result;
+                }
+            }
+            else
+            {
+                int isUpdatedChangingEmail = _usersChangingEmailRepository.Update(userChangingEmailModel);
+                if (isUpdatedChangingEmail == 0)
+                {
+                    result.Errors.Add("Wystąpił problem podczas zmiany adresu mailowego");
+                    return result;
+                }
+            }
+
+            var helpUserObject = new User();
+            helpUserObject.Email = viewModel.NewEmailAdress;
+            helpUserObject.Username = user.Username;
+
+            user.CookiesActivateLink = GenerateActivationLink(helpUserObject);
+
+            int isUpdated = await Task.Run(() => _usersRepository.Update(user));
+
+            if(isUpdated == 0)
+            {
+                result.Errors.Add("Wystąpił błąd podczas zmiany adresu email");
+                return result;
+            }
+
+            try
+            {
+                await _emailService.SendEmailAfterRegister(viewModel.OldEmailAdress, user.CookiesActivateLink,
+                      "Zmiana adresu mailowego", user.Username, EmailConfig.changeEmailMessage, EmailConfig.changeEmailLink);
+            }
+            catch
+            {
+                result.Errors.Add("Wystapił błąd podczas zmiany adresu mailowego");
+            }
+
+            return result;
+        }
         public async Task<ResultDto<RegisterDto>> Register(RegisterViewModel ViewModel)
         {
             var result = new ResultDto<RegisterDto>();
@@ -137,12 +274,49 @@ namespace Inzynierka.Services.Services
             }
 
             await _emailService.SendEmailAfterRegister(ViewModel.Email, user.CookiesActivateLink, 
-                "Potwierdzenie rejestracji", ViewModel.Username);
+                "Potwierdzenie rejestracji", ViewModel.Username, EmailConfig.registerMessage, EmailConfig.registerLink);
 
             return result;
         }
 
-        public async Task<ResultDto<ActivateEmailDto>> ConfirmRegister(string link)
+        public async Task<ResultDto<ActivateEmailDto>> ConfirmChangeEmailLink(string link)
+        {
+            var result = new ResultDto<ActivateEmailDto>();
+
+            var user = await Task.Run(() => _usersRepository.GetBy(x => x.CookiesActivateLink == link));
+
+            if(user == null)
+            {
+                result.Errors.Add("Nieprawidłowy link aktywacyjny");
+                return result;
+            }
+
+            var userChangingEmail = await Task.Run(() => _usersChangingEmailRepository.GetBy(x => x.UserId == user.Id));
+
+            if(userChangingEmail == null)
+            {
+                result.Errors.Add("Procedura zmiany adresu email nie jest aktywna");
+                return result;
+            }
+
+            user.Email = userChangingEmail.Email;
+
+            int isUserUpdated = _usersRepository.Update(user);
+
+            if(isUserUpdated == 0)
+            {
+                result.Errors.Add("Wystąpił błąd podczas aktywowania nowego adresu email");
+                return result;
+            }
+
+            var activateEmailDto = _mapper.Map<User, ActivateEmailDto>(user);
+            result.SuccessResult = activateEmailDto;
+
+            return result;
+        }
+
+
+        public async Task<ResultDto<ActivateEmailDto>> ConfirmActivationLink(string link)
         {
             var result = new ResultDto<ActivateEmailDto>();
 
@@ -158,7 +332,7 @@ namespace Inzynierka.Services.Services
 
             if (user.IsAcceptedRegister)
             {
-                result.Errors.Add("Te konto już zostało aktywowane");
+                result.Errors.Add("Rejestracja już została potwierdzona");
                 return result;
             }
 
@@ -308,11 +482,6 @@ namespace Inzynierka.Services.Services
                     result.Errors.Add("Ta nazwa użytkownika jest już zajęta");
                     return result;
                 }
-            }
-
-            if(viewModel.Email != null)
-            {
-                // Tutaj zaimplementowac zmiane emaila
             }
 
             var newUser = _mapper.Map(viewModel, user);

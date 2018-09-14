@@ -14,7 +14,10 @@ namespace Inzynierka.Services.Services
     {
         private readonly string EmailSender = "jaro1994elo@gmail.com";
         private readonly string fromPassword = "jaro1994";
-        public async Task SendEmailAfterRegister(string EmailAdress, string GeneratedLink, string Subject, string Username)
+       
+
+
+        public async Task SendEmailAfterRegister(string EmailAdress, string GeneratedLink, string Subject, string Username, string operationMessage, string operationLink)
         {
             MailAddress fromAddress = new MailAddress(EmailSender, fromPassword);
             MailAddress toAddress = new MailAddress(EmailAdress);
@@ -32,11 +35,9 @@ namespace Inzynierka.Services.Services
             message.Subject = Subject;
             var body = new StringBuilder();
             body.AppendFormat("Witaj, {0}!\n", Username);
-            body.AppendLine(@"Dziękujemy za utworzenie konta w naszym serwisie. Poniżej przesyłamy link aktywacyjny do twojego konta.
-                Jeżeli to nie ty je utworzyłeś to poprostu zignoruj wiadomość");
-            string link = "http://localhost:3000/register/activate/";
+            body.AppendLine(operationMessage);
 
-            body.AppendFormat("Link: {0}", link + GeneratedLink);
+            body.AppendFormat("Link: {0}", operationLink + GeneratedLink);
             message.Body = body.ToString();
 
             await smtp.SendMailAsync(message);

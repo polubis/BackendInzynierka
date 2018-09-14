@@ -4,8 +4,7 @@ using System.Text;
 
 namespace Inzynierka.Data.Dtos
 {
-    public class UsersDetailsDto:BaseDto
+    public class ChangeEmailDto:BaseDto
     {
-        public List<UserDetailsDto> Details { get; set; }
     }
 }

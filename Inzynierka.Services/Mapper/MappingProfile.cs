@@ -30,6 +30,7 @@ namespace Inzynierka.Services.Mapper
                 ForAllMembers(opts => opts.Condition((src, dest, srcUser) => srcUser != null));
             CreateMap<Motive, GetMotiveDto>();
             CreateMap<User, UserDto>();
+            CreateMap<User, UserDetailsDto>();
         }
     }
 }

@@ -21,23 +21,20 @@ namespace Inzynierka.API.Controllers
         }
 
         [Authorize]
-        [HttpGet("{limit}/{page}/{search}")]
-        public async Task<IActionResult> GetUsers(int limit, int page, string search)
+        [HttpGet("{limit}/{page}")]
+        public async Task<IActionResult> GetUsers(int limit, int page, string search = "")
         {
-            var result = _userService.GetUsers(limit, page, search);
+            int userId = Convert.ToInt32(User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Sid).Value);
 
+            var result = await _userService.GetUsers(limit, page, search, userId);
+
+            if (result.IsError)
+            {
+                return BadRequest(result);
+            }
             
             return Ok(result);
         }
-
-        [Authorize]
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetUserDetails()
-        {
-
-            return Ok();
-        }
-
 
         [Authorize]
         [HttpPatch("changeuserdata")]
@@ -98,10 +95,10 @@ namespace Inzynierka.API.Controllers
         }
 
         [AllowAnonymous]
-        [HttpPost("register/activate/{link}")]
-        public async Task<IActionResult> ActivateAccount(string link)
+        [HttpPost("activate/account/{link}")]
+        public async Task<IActionResult> ActivateLink(string link)
         {
-            var result = await _userService.ConfirmRegister(link);
+            var result = await _userService.ConfirmActivationLink(link);
 
             if (result.IsError)
             {
@@ -152,5 +149,39 @@ namespace Inzynierka.API.Controllers
             return Ok(result);
         }
 
+        [Authorize]
+        [HttpPost("changeemail")]
+        public async Task<IActionResult> ChangeEmail([FromBody] ChangeEmailViewModel viewModel)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            int userId = Convert.ToInt32(User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Sid).Value);
+
+            var result = await _userService.ChangeEmail(viewModel, userId);
+
+            if (result.IsError)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+
+        [AllowAnonymous]
+        [HttpPost("activate/email/{link}")]
+        public async Task<IActionResult> ActivateChangeEmailLink(string link)
+        {
+            var result = await _userService.ConfirmChangeEmailLink(link);
+
+            if (result.IsError)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
     }
 }

@@ -11,10 +11,6 @@ namespace Inzynierka.Data.ViewModels
         [StringLength(30, ErrorMessage = "Nazwa użytkownika powinna mieć od 5 do 30 znaków", MinimumLength = 5)]
         public string Username { get; set; }
 
-        [StringLength(30, ErrorMessage = "Adres email powinien mieć od 7 do 30 znaków", MinimumLength = 7)]
-        [DataType(DataType.EmailAddress)]
-        public string Email { get; set; }
-
         [StringLength(20, ErrorMessage = "Hasło powinno mieć od 5 do 20 znaków", MinimumLength = 5)]
         public string NewPassword { get; set; }
 

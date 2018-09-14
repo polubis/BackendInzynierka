@@ -12,14 +12,15 @@ namespace Inzynierka.Services.Interfaces
         Task<ResultDto<RegisterDto>> Register(RegisterViewModel registerModel);
         Task<ResultDto<LoginDto>> Login(LoginViewModel loginModel);
 
-        Task<ResultDto<ActivateEmailDto>> ConfirmRegister(string link);
+        Task<ResultDto<ActivateEmailDto>> ConfirmActivationLink(string link);
         Task<ResultDto<ReturnUserSettingsDto>> ChangeSetting(ChangeUserSettingViewModel viewModel, int UserId);
 
         Task<ResultDto<ReturnUserSettingsDto>> CreateSetting(ChangeUserSettingViewModel viewModel, int UserId);
 
         Task<ResultDto<EmptyDto>> ChangeUserData(ChangeUserDataViewModel viewModel, int userId);
-        Task<ResultDto<UsersDetailsDto>> GetUsers(int limit, int page, string search);
+        Task<ResultDto<UsersDetailsDto>> GetUsers(int limit, int page, string search, int userId);
 
-
+        Task<ResultDto<ChangeEmailDto>> ChangeEmail(ChangeEmailViewModel viewModel, int userId);
+        Task<ResultDto<ActivateEmailDto>> ConfirmChangeEmailLink(string link);
     }
 }

@@ -11,9 +11,10 @@ using System;
 namespace Inzynierka.Repository.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20180914084123_changing-email")]
+    partial class changingemail
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -206,6 +207,8 @@ namespace Inzynierka.Repository.Migrations
 
                     b.Property<bool>("IsAcceptedRegister");
 
+                    b.Property<bool?>("IsUserChangingEmail");
+
                     b.Property<string>("LastName");
 
                     b.Property<DateTime>("ModifiedDate");
@@ -221,28 +224,6 @@ namespace Inzynierka.Repository.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Users");
-                });
-
-            modelBuilder.Entity("Inzynierka.Data.DbModels.UserChangingEmail", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd();
-
-                    b.Property<DateTime>("CreationDate");
-
-                    b.Property<string>("Email")
-                        .IsRequired();
-
-                    b.Property<DateTime>("ModifiedDate");
-
-                    b.Property<int>("UserId");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId")
-                        .IsUnique();
-
-                    b.ToTable("UsersChangingEmail");
                 });
 
             modelBuilder.Entity("Inzynierka.Data.DbModels.UserSetting", b =>
@@ -322,14 +303,6 @@ namespace Inzynierka.Repository.Migrations
                     b.HasOne("Inzynierka.Data.DbModels.User", "User")
                         .WithMany("Sounds")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
-                });
-
-            modelBuilder.Entity("Inzynierka.Data.DbModels.UserChangingEmail", b =>
-                {
-                    b.HasOne("Inzynierka.Data.DbModels.User", "User")
-                        .WithOne("UserChangingEmail")
-                        .HasForeignKey("Inzynierka.Data.DbModels.UserChangingEmail", "UserId")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
