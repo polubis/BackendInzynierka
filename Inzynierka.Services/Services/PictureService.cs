@@ -54,7 +54,7 @@ namespace Inzynierka.Services.Services
                 return null;
             }
            
-            return pathToSaveImage;
+            return userId.ToString() + "_" + fileNameWithoutDashes;
         }
         private bool CreateDirectoryStructure(string pathToPictures, string pathToFolderBasedOnImgType)
         {

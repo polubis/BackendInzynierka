@@ -42,24 +42,33 @@ namespace Inzynierka.API.Controllers
         }
 
         [AllowAnonymous]
-        [HttpGet("getsounds/{type}")]
-        public async Task<IActionResult> GetSoundsByType(string type)
+        [HttpGet]
+        public async Task<IActionResult> GetOnlySoundsByCategory()
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+            string categoryName = "sound";
+            var result = await _soundsService.GetSoundNamesByCategory(categoryName);
 
-            var result = await _soundsService.DownloadZippedSounds(type);
-
-            if(result.IsError)
+            if (result.IsError)
             {
                 return BadRequest(result);
             }
 
-            var zipFileStream = System.IO.File.OpenRead(result.SuccessResult.Path);
+            return Ok(result);
+        }
 
-            return File(zipFileStream, "application/zip");
+        [Authorize]
+        [HttpGet("chords")]
+        public async Task<IActionResult> GetChords()
+        {
+            string categoryName = "chord";
+            var result = await _soundsService.GetSoundNamesByCategory(categoryName);
+
+            if (result.IsError)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
         }
 
         [Authorize]

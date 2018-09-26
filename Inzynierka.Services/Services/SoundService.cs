@@ -26,6 +26,7 @@ namespace Inzynierka.Services.Services
 
         private readonly Interval mainInterval = new Interval();
 
+        private readonly int MinimumNumberOfSoundsAndChords = 10;
         private readonly int MinimumNumberOfSoundsInMixedType = 25;
         private readonly int MinimumNumberOfSoundsToGetIntervals = 12;
 
@@ -177,63 +178,44 @@ namespace Inzynierka.Services.Services
             return result;
         }
 
-        public async Task<ResultDto<GetZippedSoundsDto>> DownloadZippedSounds(string type)
+        public async Task<ResultDto<GetSoundsByCategoryDto>> GetSoundNamesByCategory(string category)
         {
-            var result = new ResultDto<GetZippedSoundsDto>();
-       
-            if (!isTypeValid(type))
+            var result = new ResultDto<GetSoundsByCategoryDto>();
+
+            if (!isTypeValid(category))
             {
                 result.Errors.Add("Rodzaj trybu jest niezgodny ze zdefiniowanymi typami");
 
                 return result;
             }
 
-            int minimumNumberOfFiles = SoundTypes.Single(x => x.SoundType == type).NumberOfFiles;
+            var soundsByType = await Task.Run(() => _soundRepository.GetAllBy(x => x.Category == category).ToList());
 
-            FoldersInfo foldersInfo = await Task.Run(() => countFilesInFoldersByFolderNameArray());
-
-            if (foldersInfo.NumberOfAllFiles < minimumNumberOfFiles)
+            if (soundsByType.Count < MinimumNumberOfSoundsAndChords)
             {
-                result.Errors.Add("Ta gra nie może być rozpoczęta ponieważ system nie posiada wystarczającej ilości próbek dźwiękowych");
-
+                result.Errors.Add("Ta gra nie może być rozpoczęta ponieważ system nie posiada wystarczającej ilości próbek dźwiękowych dla tej kategorii");
                 return result;
             }
+         
+            Random rnd = new Random();
 
-            if (!foldersInfo.isAllFoldersHaveMinimumNumberOfFiles)
+            var soundsNames = new List<string>();
+
+            int numberOfFilesToTake = SoundTypes.Single(x => x.SoundType == category).NumberOfFiles;
+
+            for (int i = 0; i < numberOfFilesToTake; i++)
             {
-                result.Errors.Add("Jeden z folderów nie spełnia wymagań dotyczących minimalnej ilości próbek dźwiękowych");
-
-                return result;
+                int randomizedIndex = rnd.Next(0, soundsByType.Count());
+                var name = soundsByType.ElementAt(randomizedIndex).FullName;
+                soundsNames.Add(soundsByType.ElementAt(randomizedIndex).FullName);
             }
 
-            if (File.Exists(pathToSaveZippedSounds))
-            {
-                File.Delete(pathToSaveZippedSounds);
-            }
+            result.SuccessResult = new GetSoundsByCategoryDto() { SoundNames = soundsNames };
 
-            using (ZipArchive zip = ZipFile.Open(pathToSaveZippedSounds, ZipArchiveMode.Create))
-            {
-                Random rnd = new Random();
-
-                string pathToGetFiles = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "sounds");
-
-                var files = await Task.Run(() =>
-                    new DirectoryInfo(pathToGetFiles).GetFiles().Where(x => x.Name.Contains(type))
-                ); 
-
-                for (int i = 0; i < minimumNumberOfFiles; i++)
-                {
-                    int randomizedIndex = rnd.Next(0, files.Count());
-                    string pathToGetSingleFile = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "sounds",
-                        files.ElementAt(randomizedIndex).Name);
-
-                    zip.CreateEntryFromFile(pathToGetSingleFile, i.ToString() + "_" + files.ElementAt(randomizedIndex).Name);
-                }
-
-                result.SuccessResult = new GetZippedSoundsDto() { Path = pathToSaveZippedSounds };
-            }
             return result;
+
         }
+       
         public async Task<ResultDto<UploadSoundDto>> UploadSounds(SoundViewModel viewModel, int userId)
         {
             var result = new ResultDto<UploadSoundDto>();

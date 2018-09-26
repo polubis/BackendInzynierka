@@ -94,6 +94,7 @@ namespace Inzynierka.API
                 app.UseDeveloperExceptionPage();
             }
             app.UseCors(bulider => bulider.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod().AllowCredentials());
+            app.UseStaticFiles();
 
             app.UseSwagger();
             app.UseSwaggerUI(c => {

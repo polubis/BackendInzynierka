@@ -11,8 +11,8 @@ namespace Inzynierka.Services.Interfaces
     public interface ISoundService
     {
         Task<ResultDto<UploadSoundDto>> UploadSounds(SoundViewModel soundModel, int userId);
-        Task<ResultDto<GetZippedSoundsDto>> DownloadZippedSounds(string type);
         Task<ResultDto<GetZippedSoundsDto>> DownloadZippedSoundsMixed();
         Task<ResultDto<GetZippedSoundsDto>> DownloadZippedIntervalsByType(string type, int numberOfIntervalsToCreate);
+        Task<ResultDto<GetSoundsByCategoryDto>> GetSoundNamesByCategory(string category);
     }
 }
