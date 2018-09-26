@@ -22,5 +22,6 @@ namespace Inzynierka.Services.Interfaces
 
         Task<ResultDto<ChangeEmailDto>> ChangeEmail(ChangeEmailViewModel viewModel, int userId);
         Task<ResultDto<ActivateEmailDto>> ConfirmChangeEmailLink(string link);
+        Task<ResultDto<LoginDto>> GetUserData(int userId);
     }
 }

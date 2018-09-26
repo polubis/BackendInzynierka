@@ -227,7 +227,7 @@ namespace Inzynierka.Services.Services
                     string pathToGetSingleFile = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "sounds",
                         files.ElementAt(randomizedIndex).Name);
 
-                    zip.CreateEntryFromFile(pathToGetSingleFile, files.ElementAt(randomizedIndex).Name);
+                    zip.CreateEntryFromFile(pathToGetSingleFile, i.ToString() + "_" + files.ElementAt(randomizedIndex).Name);
                 }
 
                 result.SuccessResult = new GetZippedSoundsDto() { Path = pathToSaveZippedSounds };

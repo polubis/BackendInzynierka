@@ -94,6 +94,22 @@ namespace Inzynierka.API.Controllers
             return Ok(result);
         }
 
+        [Authorize]
+        [HttpGet("userdata")]
+        public async Task<IActionResult> GetUserData()
+        {
+            int userId = Convert.ToInt32(User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Sid).Value);
+
+            var result = await _userService.GetUserData(userId);
+
+            if (result.IsError)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+
         [AllowAnonymous]
         [HttpPost("activate/account/{link}")]
         public async Task<IActionResult> ActivateLink(string link)

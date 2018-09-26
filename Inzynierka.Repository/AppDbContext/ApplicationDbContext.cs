@@ -28,11 +28,14 @@ namespace Inzynierka.Repository.AppDbContext
             modelBuilder.Entity<Quiz>().HasMany(g => g.Questions).WithOne(e => e.Quiz);
             modelBuilder.Entity<User>().HasOne(g => g.UserSetting).WithOne(e => e.User);
             modelBuilder.Entity<User>().HasMany(g => g.Motives).WithOne(e => e.User);
-            modelBuilder.Entity<UserSetting>().HasOne(g => g.Motive).WithOne(e => e.UserSetting);
+
+            modelBuilder.Entity<UserSetting>().HasOne(g => g.Motive).WithOne(e => e.UserSetting).HasForeignKey<UserSetting>(x => x.MotiveId).
+                OnDelete(DeleteBehavior.Restrict);
+
             modelBuilder.Entity<User>().HasOne(g => g.UserChangingEmail).WithOne(e => e.User);
 
 
-            modelBuilder.Entity<SharedMotives>().HasOne(g => g.Motive).WithMany(e => e.SharedMotives).HasForeignKey(x => x.MotiveId).OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<SharedMotives>().HasOne(g => g.Motive).WithMany(e => e.SharedMotives).HasForeignKey(x => x.MotiveId);
             modelBuilder.Entity<SharedMotives>().HasOne(g => g.User).WithMany(e => e.SharedMotives).HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Restrict);
 
         }

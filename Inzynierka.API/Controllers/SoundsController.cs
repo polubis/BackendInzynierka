@@ -41,7 +41,7 @@ namespace Inzynierka.API.Controllers
             return Ok(result);
         }
 
-        [Authorize]
+        [AllowAnonymous]
         [HttpGet("getsounds/{type}")]
         public async Task<IActionResult> GetSoundsByType(string type)
         {

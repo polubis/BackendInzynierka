@@ -130,6 +130,25 @@ namespace Inzynierka.Services.Services
             return GetHash(user.Username + user.Email);
         }
 
+        public async Task<ResultDto<LoginDto>> GetUserData(int userId)
+        {
+            var result = new ResultDto<LoginDto>();
+
+            var user = await Task.Run(() => _usersRepository.GetBy(x => x.Id == userId, x => x.UserSetting, x => x.Motives));
+
+            var getUserResult = _mapper.Map<LoginDto>(user);
+
+            var actualMotive = _userSettingsRepository.GetBy(x => x.UserId == user.Id, x => x.Motive);
+
+            if (actualMotive != null)
+            {
+                getUserResult.UserSetting.MotiveDto = _mapper.Map<MotiveDto>(actualMotive.Motive);
+            }
+
+            result.SuccessResult = getUserResult;
+
+            return result;
+        }
 
         public async Task<ResultDto<LoginDto>> Login(LoginViewModel loginModel)
         {

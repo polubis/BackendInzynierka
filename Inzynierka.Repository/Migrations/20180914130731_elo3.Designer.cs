@@ -11,9 +11,10 @@ using System;
 namespace Inzynierka.Repository.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20180914130731_elo3")]
+    partial class elo3
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -337,8 +338,7 @@ namespace Inzynierka.Repository.Migrations
                 {
                     b.HasOne("Inzynierka.Data.DbModels.Motive", "Motive")
                         .WithOne("UserSetting")
-                        .HasForeignKey("Inzynierka.Data.DbModels.UserSetting", "MotiveId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("Inzynierka.Data.DbModels.UserSetting", "MotiveId");
 
                     b.HasOne("Inzynierka.Data.DbModels.User", "User")
                         .WithOne("UserSetting")
