@@ -73,18 +73,16 @@ namespace Inzynierka.API.Controllers
 
         [Authorize]
         [HttpGet("getsoundsmixed")]
-        public async Task<IActionResult> GetSoundsMixed()
+        public async Task<IActionResult> GetSoundsAndChords()
         {
-            var result = await _soundsService.DownloadZippedSoundsMixed();
+            var result = await _soundsService.GetSoundsAndChords();
 
             if (result.IsError)
             {
                 return BadRequest(result);
             }
 
-            var zipFileStream = System.IO.File.OpenRead(result.SuccessResult.Path);
-
-            return File(zipFileStream, "application/zip");
+            return Ok(result);
         }
 
         [AllowAnonymous]

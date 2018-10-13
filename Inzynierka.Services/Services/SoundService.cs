@@ -132,9 +132,9 @@ namespace Inzynierka.Services.Services
             return result;
         }
 
-        public async Task<ResultDto<GetZippedSoundsDto>> DownloadZippedSoundsMixed()
+        public async Task<ResultDto<GetSoundsByCategoryDto>> GetSoundsAndChords()
         {
-            var result = new ResultDto<GetZippedSoundsDto>();
+            var result = new ResultDto<GetSoundsByCategoryDto>();
 
             string pathToGetFiles = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "sounds");
 
@@ -144,36 +144,18 @@ namespace Inzynierka.Services.Services
 
                 return result;
             }
+            var files = await Task.Run(() => _soundRepository.GetAll().ToList());
+            int numberOfFiles = files.Count();
+            Random rnd = new Random();
+            List<string> listOfSoundNames = new List<string>();
 
-            if (File.Exists(pathToSaveZippedSounds))
+            for (int i = 0; i < MinimumNumberOfSoundsInMixedType; i++)
             {
-                File.Delete(pathToSaveZippedSounds);
+                int randomizedIndex = rnd.Next(0, numberOfFiles);
+                listOfSoundNames.Add(files.ElementAt(randomizedIndex).FullName);
             }
 
-            var files = await Task.Run(() => new DirectoryInfo(pathToGetFiles).GetFiles());
-
-            if (files.Length < MinimumNumberOfSoundsInMixedType)
-            {
-                result.Errors.Add("Ilość plików do rozpoczęcia tego trybu jest zbyt mała");
-
-                return result;
-            }
-
-            using (ZipArchive zip = ZipFile.Open(pathToSaveZippedSounds, ZipArchiveMode.Create))
-            {
-                Random rnd = new Random();
-
-                for (int i = 0; i < MinimumNumberOfSoundsInMixedType; i++)
-                {
-                    int randomizedIndex = rnd.Next(0, MinimumNumberOfSoundsInMixedType);
-                    string pathToGetSingleFile = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "sounds",
-                        files.ElementAt(randomizedIndex).Name);
-
-                    zip.CreateEntryFromFile(pathToGetSingleFile, files.ElementAt(randomizedIndex).Name);
-                }
-
-                result.SuccessResult = new GetZippedSoundsDto() { Path = pathToSaveZippedSounds };
-            }
+            result.SuccessResult = new GetSoundsByCategoryDto() { SoundNames = listOfSoundNames };
 
             return result;
         }
