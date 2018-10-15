@@ -87,8 +87,8 @@ namespace Inzynierka.Data.HelpModels
                 firstSoundName = sounds.ElementAt(firstRandom).Name;
                 secondSoundName = sounds.ElementAt(secondRandom).Name;
 
-                firstOctaveSymbol = Convert.ToInt32(sounds.ElementAt(firstRandom).OctaveSymbol);
-                secondOctaveSymbol = Convert.ToInt32(sounds.ElementAt(secondRandom).OctaveSymbol);
+                firstOctaveSymbol = Convert.ToInt32(sounds.ElementAt(firstRandom).GuitarString);
+                secondOctaveSymbol = Convert.ToInt32(sounds.ElementAt(secondRandom).GuitarString);
 
                 positionOfFirstSoundInArray = SoundTypes.SingleOrDefault(x => x.Key == firstSoundName).Value;
                 positionOfSecondSoundInArray = SoundTypes.SingleOrDefault(x => x.Key == secondSoundName).Value;

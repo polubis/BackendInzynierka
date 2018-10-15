@@ -224,7 +224,9 @@ namespace Inzynierka.Services.Services
 
             var files = await Task.Run(() => new DirectoryInfo(soundFolderPath).GetFiles());
 
-            string combinedSoundName = viewModel.Name + "_" + viewModel.Category + "_" + viewModel.OctaveSymbol + ".mp3";
+            string soundPosition = viewModel.SoundPosition == null ? "" : "_" + viewModel.SoundPosition.ToString();
+
+            string combinedSoundName = viewModel.Name + "_" + viewModel.Category + "_" + viewModel.GuitarString.ToString() + soundPosition + ".mp3";
 
             foreach (var file in files)
             {

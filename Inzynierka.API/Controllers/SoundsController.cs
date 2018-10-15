@@ -43,7 +43,7 @@ namespace Inzynierka.API.Controllers
 
         [AllowAnonymous]
         [HttpGet]
-        public async Task<IActionResult> GetOnlySoundsByCategory()
+        public async Task<IActionResult> GetSounds()
         {
             string categoryName = "sound";
             var result = await _soundsService.GetSoundNamesByCategory(categoryName);

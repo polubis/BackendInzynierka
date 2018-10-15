@@ -159,9 +159,16 @@ namespace Inzynierka.Services.Services
             var quiz = _mapper.Map<Quiz>(viewModel);
             quiz.UserId = userId;
             quiz.RateInNumber = RateInNumber;
-            quiz.SecondsSpendOnQuiz = viewModel.Questions.Sum(x => x.TimeForAnswerInSeconds);
-            quiz.PointsForGame = (sumOfAllPoints + RateInNumber) - quiz.SecondsSpendOnQuiz;
 
+            double sumOfTimeForAnswers = 0;
+
+            foreach(var element in viewModel.Questions)
+            {
+                sumOfTimeForAnswers += element.TimeForAnswerInSeconds;
+            }
+
+            quiz.SecondsSpendOnQuiz = sumOfTimeForAnswers;
+            quiz.PointsForGame = (sumOfAllPoints + RateInNumber) - quiz.SecondsSpendOnQuiz;
 
             var insertedQuiz = await _quizRepository.InsertAndReturnObject(quiz);
 

@@ -22,7 +22,7 @@ namespace Inzynierka.API.Controllers
 
         [Authorize]
         [HttpPost("createresult")]
-        public async Task<IActionResult> CreateQuizResult([FromBody]CreateQuizViewModel viewModel)
+        public async Task<IActionResult> CreateQuizResult([FromBody] CreateQuizViewModel viewModel)
         {
             if (!ModelState.IsValid)
             {

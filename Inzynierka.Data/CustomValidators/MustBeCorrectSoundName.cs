@@ -12,7 +12,7 @@ namespace Inzynierka.Data.CustomValidators
             var givenSoundsName = value as string;
             if (givenSoundsName != "")
             {
-                string[] CorrectSoundNames = new string[] { "A", "Ais", "B", "C", "Cis", "D", "Dis", "E", "F", "Fis", "G", "Gis" };
+                string[] CorrectSoundNames = new string[] { "A", "Ais", "H", "C", "Cis", "D", "Dis", "E", "F", "Fis", "G", "Gis" };
 
                 bool isCorrectSoundsNamesContainsValue = false;
                 foreach(string element in CorrectSoundNames)

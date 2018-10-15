@@ -11,7 +11,7 @@ namespace Inzynierka.Data.DbModels
         public string QuizType { get; set; }
 
         [Required]
-        public int SecondsSpendOnQuiz { get; set; }
+        public double SecondsSpendOnQuiz { get; set; }
 
         [Required]
         public int NumberOfPositiveRates { get; set; }

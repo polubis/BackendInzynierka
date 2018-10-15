@@ -20,6 +20,6 @@ namespace Inzynierka.Data.ViewModels
         public double CalculatedPoints { get; set; }
 
         [Required]
-        public int TimeForAnswerInSeconds { get; set; }
+        public double TimeForAnswerInSeconds { get; set; }
     }
 }

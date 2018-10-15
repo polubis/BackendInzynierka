@@ -20,7 +20,7 @@ namespace Inzynierka.Data.DbModels
         public bool AnsweredBeforeSugestion { get; set; }
 
         [Required]
-        public int TimeForAnswerInSeconds { get; set; }
+        public double TimeForAnswerInSeconds { get; set; }
 
         [Required]
         public double PointsForQuestion { get; set; }

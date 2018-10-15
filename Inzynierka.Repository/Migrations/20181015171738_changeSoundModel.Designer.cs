@@ -11,9 +11,10 @@ using System;
 namespace Inzynierka.Repository.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20181015171738_changeSoundModel")]
+    partial class changeSoundModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -70,7 +71,7 @@ namespace Inzynierka.Repository.Migrations
 
                     b.Property<int>("QuizId");
 
-                    b.Property<double>("TimeForAnswerInSeconds");
+                    b.Property<int>("TimeForAnswerInSeconds");
 
                     b.HasKey("Id");
 
@@ -99,7 +100,7 @@ namespace Inzynierka.Repository.Migrations
 
                     b.Property<double>("RateInNumber");
 
-                    b.Property<double>("SecondsSpendOnQuiz");
+                    b.Property<int>("SecondsSpendOnQuiz");
 
                     b.Property<int>("UserId");
 

@@ -15,8 +15,10 @@ namespace Inzynierka.Data.ViewModels
         [MustBeCorrectCategoryName(ErrorMessage = "Nazwa kategori powinna zgadzać się ze zdefiniowanymi nazwami")]
         public string Category { get; set; }
 
-        [MustHaveCorrectOctaveSymbol(ErrorMessage = "Symbol oktawy jest nieprawidłowy")]
-        public string OctaveSymbol { get; set; }
+        [Required]
+        public int GuitarString { get; set; }
+
+        public int? SoundPosition { get; set; }
 
         [Required]
         public IFormFile Sound { get; set; }

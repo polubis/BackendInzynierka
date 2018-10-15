@@ -22,7 +22,9 @@ namespace Inzynierka.Data.DbModels
         public string FullName { get; set; }
 
         [Required]
-        public string OctaveSymbol { get; set; }
+        public int GuitarString { get; set; }
+
+        public int? SoundPosition { get; set; }
 
     }
 }
