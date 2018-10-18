@@ -73,7 +73,7 @@ namespace Inzynierka.API.Controllers
 
         [Authorize]
         [HttpGet("seed/{type}")]
-        public async Task<IActionResult> GetSoundsAndChords(string type)
+        public async Task<IActionResult> SeedProbes(string type)
         {
             int userId = Convert.ToInt32(User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Sid).Value);
 

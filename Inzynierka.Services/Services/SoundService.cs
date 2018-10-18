@@ -308,14 +308,15 @@ namespace Inzynierka.Services.Services
 
                 string name = file.Name.Substring(0, indexOfDash);
 
-                string chordType = file.Name.Substring(indexOfDash + 1, file.Name.Length - 1);
+                string chordType = file.Name.Contains("dur") ? "dur" : "moll";
 
                 listOfProbes.Add(new Sound()
                 {
                     UserId = userId,
                     Category = category,
                     Name = name,
-                    FullName = file.Name
+                    FullName = file.Name,
+                    ChordType = chordType
                 });
             }
 
