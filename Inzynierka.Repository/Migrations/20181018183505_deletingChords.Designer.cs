@@ -11,8 +11,8 @@ using System;
 namespace Inzynierka.Repository.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20180913070523_change-rates")]
-    partial class changerates
+    [Migration("20181018183505_deletingChords")]
+    partial class deletingChords
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -58,6 +58,8 @@ namespace Inzynierka.Repository.Migrations
                     b.Property<string>("Answer")
                         .IsRequired();
 
+                    b.Property<bool>("AnsweredBeforeSugestion");
+
                     b.Property<string>("CorrectAnswer")
                         .IsRequired();
 
@@ -69,9 +71,7 @@ namespace Inzynierka.Repository.Migrations
 
                     b.Property<int>("QuizId");
 
-                    b.Property<int>("TimeForAnswerInSeconds");
-
-                    b.Property<bool>("WasAnswerCorrect");
+                    b.Property<double>("TimeForAnswerInSeconds");
 
                     b.HasKey("Id");
 
@@ -93,15 +93,14 @@ namespace Inzynierka.Repository.Migrations
 
                     b.Property<int>("NumberOfPositiveRates");
 
-                    b.Property<double?>("PointsForGame")
-                        .IsRequired();
+                    b.Property<double>("PointsForGame");
 
                     b.Property<string>("QuizType")
                         .IsRequired();
 
                     b.Property<double>("RateInNumber");
 
-                    b.Property<int>("SecondsSpendOnQuiz");
+                    b.Property<double>("SecondsSpendOnQuiz");
 
                     b.Property<int>("UserId");
 
@@ -125,8 +124,7 @@ namespace Inzynierka.Repository.Migrations
 
                     b.Property<int>("NumberOfPlayedGames");
 
-                    b.Property<double?>("PointsForAllGames")
-                        .IsRequired();
+                    b.Property<double>("PointsForAllGames");
 
                     b.Property<int>("UserId");
 
@@ -173,13 +171,14 @@ namespace Inzynierka.Repository.Migrations
                     b.Property<string>("FullName")
                         .IsRequired();
 
+                    b.Property<int>("GuitarString");
+
                     b.Property<DateTime>("ModifiedDate");
 
                     b.Property<string>("Name")
                         .IsRequired();
 
-                    b.Property<string>("OctaveSymbol")
-                        .IsRequired();
+                    b.Property<int?>("SoundPosition");
 
                     b.Property<int>("UserId");
 
@@ -224,6 +223,28 @@ namespace Inzynierka.Repository.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("Inzynierka.Data.DbModels.UserChangingEmail", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd();
+
+                    b.Property<DateTime>("CreationDate");
+
+                    b.Property<string>("Email")
+                        .IsRequired();
+
+                    b.Property<DateTime>("ModifiedDate");
+
+                    b.Property<int>("UserId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("UsersChangingEmail");
                 });
 
             modelBuilder.Entity("Inzynierka.Data.DbModels.UserSetting", b =>
@@ -290,7 +311,7 @@ namespace Inzynierka.Repository.Migrations
                     b.HasOne("Inzynierka.Data.DbModels.Motive", "Motive")
                         .WithMany("SharedMotives")
                         .HasForeignKey("MotiveId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("Inzynierka.Data.DbModels.User", "User")
                         .WithMany("SharedMotives")
@@ -306,11 +327,20 @@ namespace Inzynierka.Repository.Migrations
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
+            modelBuilder.Entity("Inzynierka.Data.DbModels.UserChangingEmail", b =>
+                {
+                    b.HasOne("Inzynierka.Data.DbModels.User", "User")
+                        .WithOne("UserChangingEmail")
+                        .HasForeignKey("Inzynierka.Data.DbModels.UserChangingEmail", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
             modelBuilder.Entity("Inzynierka.Data.DbModels.UserSetting", b =>
                 {
                     b.HasOne("Inzynierka.Data.DbModels.Motive", "Motive")
                         .WithOne("UserSetting")
-                        .HasForeignKey("Inzynierka.Data.DbModels.UserSetting", "MotiveId");
+                        .HasForeignKey("Inzynierka.Data.DbModels.UserSetting", "MotiveId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Inzynierka.Data.DbModels.User", "User")
                         .WithOne("UserSetting")

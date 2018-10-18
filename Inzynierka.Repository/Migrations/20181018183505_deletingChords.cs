@@ -4,20 +4,20 @@ using System.Collections.Generic;
 
 namespace Inzynierka.Repository.Migrations
 {
-    public partial class dletechanging : Migration
+    public partial class deletingChords : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "IsUserChangingEmail",
-                table: "Users");
+                name: "ChordType",
+                table: "Sounds");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<bool>(
-                name: "IsUserChangingEmail",
-                table: "Users",
+            migrationBuilder.AddColumn<string>(
+                name: "ChordType",
+                table: "Sounds",
                 nullable: true);
         }
     }

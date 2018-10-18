@@ -165,6 +165,8 @@ namespace Inzynierka.Repository.Migrations
                     b.Property<string>("Category")
                         .IsRequired();
 
+                    b.Property<string>("ChordType");
+
                     b.Property<DateTime>("CreationDate");
 
                     b.Property<string>("FullName")

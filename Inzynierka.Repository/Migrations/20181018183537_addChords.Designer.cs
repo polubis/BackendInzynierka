@@ -11,8 +11,8 @@ using System;
 namespace Inzynierka.Repository.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20181015171738_changeSoundModel")]
-    partial class changeSoundModel
+    [Migration("20181018183537_addChords")]
+    partial class addChords
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -71,7 +71,7 @@ namespace Inzynierka.Repository.Migrations
 
                     b.Property<int>("QuizId");
 
-                    b.Property<int>("TimeForAnswerInSeconds");
+                    b.Property<double>("TimeForAnswerInSeconds");
 
                     b.HasKey("Id");
 
@@ -100,7 +100,7 @@ namespace Inzynierka.Repository.Migrations
 
                     b.Property<double>("RateInNumber");
 
-                    b.Property<int>("SecondsSpendOnQuiz");
+                    b.Property<double>("SecondsSpendOnQuiz");
 
                     b.Property<int>("UserId");
 
@@ -165,6 +165,8 @@ namespace Inzynierka.Repository.Migrations
 
                     b.Property<string>("Category")
                         .IsRequired();
+
+                    b.Property<string>("ChordType");
 
                     b.Property<DateTime>("CreationDate");
 

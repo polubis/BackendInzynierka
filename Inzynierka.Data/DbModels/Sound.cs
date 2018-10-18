@@ -26,5 +26,7 @@ namespace Inzynierka.Data.DbModels
 
         public int? SoundPosition { get; set; }
 
+        public string ChordType { get; set; }
+
     }
 }

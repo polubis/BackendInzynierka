@@ -261,5 +261,108 @@ namespace Inzynierka.Services.Services
             return result;
         }
 
+        public async Task<ResultDto<SeedDto>> SeedSounds(int userId, string probesType)
+        {
+            var result = new ResultDto<SeedDto>();
+
+            var rootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+
+            if (!Directory.Exists(rootPath))
+            {
+                result.Errors.Add("Brak katalogu glównego");
+                return result;
+            }
+
+            var soundsPath = Path.Combine(rootPath, probesType);
+
+            if (!Directory.Exists(soundsPath))
+            {
+                result.Errors.Add("Brak katalogu z dzwiekami");
+                return result;
+            }
+
+            var files = await Task.Run(() => new DirectoryInfo(soundsPath).GetFiles());
+
+            string categoryWithoutLastChar = probesType.Remove(probesType.Length - 1);
+
+            var probes = categoryWithoutLastChar == "sound" ? ReturnSounds(files, categoryWithoutLastChar, userId) :
+                   ReturnChords(files, categoryWithoutLastChar, userId);
+
+            int isInserted = await _soundRepository.InsertList(probes);
+
+            if (isInserted == 0)
+            {
+                result.Errors.Add("Wystapil blad podczas dodawania próbek");
+            }
+
+            return result;
+        }
+
+        private List<Sound> ReturnChords(FileInfo[] files, string category, int userId)
+        {
+            var listOfProbes = new List<Sound>();
+
+            foreach (var file in files)
+            {
+                int indexOfDash = file.Name.IndexOf("_");
+
+                string name = file.Name.Substring(0, indexOfDash);
+
+                string chordType = file.Name.Substring(indexOfDash + 1, file.Name.Length - 1);
+
+                listOfProbes.Add(new Sound()
+                {
+                    UserId = userId,
+                    Category = category,
+                    Name = name,
+                    FullName = file.Name
+                });
+            }
+
+            return listOfProbes;
+        }
+
+        private List<Sound> ReturnSounds(FileInfo[] files, string category, int userId)
+        {
+            var listOfProbes = new List<Sound>();
+
+            foreach (var file in files)
+            {
+                int guitarStringIndex = file.Name.IndexOf("_");
+
+                int guitarString = Int32.Parse(file.Name[guitarStringIndex + 1].ToString());
+
+                int numberOfDashes = file.Name.Count(x => x == '_');
+
+                string name = file.Name.Substring(0, guitarStringIndex);
+
+                int? soundPosition;
+
+                if (numberOfDashes > 1)
+                {
+                    int soundPositionIndex = file.Name.LastIndexOf("_");
+                    soundPosition = Int32.Parse(file.Name[soundPositionIndex + 1].ToString());
+                }
+                else
+                {
+                    soundPosition = null;
+                }
+
+                listOfProbes.Add(new Sound()
+                {
+                    UserId = userId,
+                    Category = category,
+                    Name = name,
+                    FullName = file.Name,
+                    GuitarString = guitarString,
+                    SoundPosition = soundPosition
+                });
+            }
+
+            return listOfProbes;
+        }
+
+
+
     }
 }

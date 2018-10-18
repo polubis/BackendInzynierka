@@ -72,6 +72,22 @@ namespace Inzynierka.API.Controllers
         }
 
         [Authorize]
+        [HttpGet("seed/{type}")]
+        public async Task<IActionResult> GetSoundsAndChords(string type)
+        {
+            int userId = Convert.ToInt32(User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Sid).Value);
+
+            var result = await _soundsService.SeedSounds(userId, type);
+
+            if (result.IsError)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
+
+        [Authorize]
         [HttpGet("getsoundsmixed")]
         public async Task<IActionResult> GetSoundsAndChords()
         {

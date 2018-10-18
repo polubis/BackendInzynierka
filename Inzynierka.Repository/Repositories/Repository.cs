@@ -20,6 +20,18 @@ namespace Inzynierka.Repository.Repositories
             _dbContext = context;
             _dbSet = _dbContext.Set<T>();
         }
+
+        public async Task<int> InsertList(List<T> entities)
+        {
+            if(entities.Count == 0)
+            {
+                throw new ArgumentNullException("entity");
+            }
+
+            await _dbContext.AddRangeAsync(entities);
+
+            return await _dbContext.SaveChangesAsync();
+        }
         public async Task<int> Insert(T entity)
         {
             if (entity == null)

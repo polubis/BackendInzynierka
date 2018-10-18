@@ -25,5 +25,6 @@ namespace Inzynierka.Repository.Interfaces
         IEnumerable<T> GetAllByWithLimit(Expression<Func<T, bool>> getBy, Expression<Func<T, object>> orderByDescending,
             Expression<Func<T, object>> orderByAscending,
             int limit, int skip, params Expression<Func<T, object>>[] includes);
+        Task<int> InsertList(List<T> entities);
     }
 }

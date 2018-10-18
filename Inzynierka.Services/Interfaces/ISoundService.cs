@@ -14,5 +14,6 @@ namespace Inzynierka.Services.Interfaces
         Task<ResultDto<GetSoundsByCategoryDto>> GetSoundsAndChords();
         Task<ResultDto<GetZippedSoundsDto>> DownloadZippedIntervalsByType(string type, int numberOfIntervalsToCreate);
         Task<ResultDto<GetSoundsByCategoryDto>> GetSoundNamesByCategory(string category);
+        Task<ResultDto<SeedDto>> SeedSounds(int userId, string probesType);
     }
 }
