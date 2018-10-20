@@ -128,27 +128,9 @@ namespace Inzynierka.Services.Services
         {
             var result = new ResultDto<CreateQuizDto>();
 
-            bool DidSomeoneModifiedQuestions = VerifyQuestionsRatingPointsAreNotModified(viewModel.Questions, 
-                viewModel.NumberOfPositiveRates);
-
-            if (DidSomeoneModifiedQuestions)
-            {
-                result.Errors.Add("Bawimy się w oszusta? Nie z nami takie numery :X");
-                return result;
-            }
-
             var questions = _mapper.Map<List<QuestionViewModel>, List<Question>>(viewModel.Questions);
 
             var questionsWithCalculatedPoints = await Task.Run(() => CalculatePointsForEveryQuestion(questions, viewModel.QuizType));
-
-            bool isCalculatedPointsAreModified = CheckIsCalculatedQuestionPointsAreModified(viewModel.Questions, 
-                questionsWithCalculatedPoints);
-
-            if (isCalculatedPointsAreModified)
-            {
-                result.Errors.Add("Bawimy się w oszusta? Nie z nami takie numery :X");
-                return result;
-            }
 
             double sumOfAllPoints = questionsWithCalculatedPoints.Sum(x => x.PointsForQuestion);
             double RateInNumber = await Task.Run(() =>
@@ -167,8 +149,8 @@ namespace Inzynierka.Services.Services
                 sumOfTimeForAnswers += element.TimeForAnswerInSeconds;
             }
 
-            quiz.SecondsSpendOnQuiz = sumOfTimeForAnswers;
-            quiz.PointsForGame = (sumOfAllPoints + RateInNumber) - quiz.SecondsSpendOnQuiz;
+            quiz.SecondsSpendOnQuiz = Math.Round(sumOfTimeForAnswers, 2);
+            quiz.PointsForGame = Math.Round((sumOfAllPoints + RateInNumber) - quiz.SecondsSpendOnQuiz, 2);
 
             var insertedQuiz = await _quizRepository.InsertAndReturnObject(quiz);
 
@@ -246,18 +228,6 @@ namespace Inzynierka.Services.Services
             return new RateModel(overAllRate, countOfQuizes, overAllPoints);
         }
 
-        private bool VerifyQuestionsRatingPointsAreNotModified(List<QuestionViewModel> questions, int givenNumberOfPositiveRates)
-        {
-            int numberOfPositiveRates = 0;
-            foreach(var question in questions)
-                numberOfPositiveRates += question.Answer == question.CorrectAnswer ? 1 : 0;
-
-            if (givenNumberOfPositiveRates != numberOfPositiveRates)
-                return true;
-
-            return false;
-        }
-
         private List<Question> CalculatePointsForEveryQuestion(List<Question> questions, string quizType)
         {
             var clonedQuestions = _mapper.Map<List<Question>>(questions);
@@ -266,9 +236,8 @@ namespace Inzynierka.Services.Services
             {
                 if (question.CorrectAnswer == question.Answer)
                 {
-                    question.PointsForQuestion = QuizTypes[quizType] * (question.TimeForAnswerInSeconds + 1);
+                    question.PointsForQuestion = question.TimeForAnswerInSeconds;
                     question.PointsForQuestion += question.AnsweredBeforeSugestion ? 5 : 0;
-                    
                 }
                 else
                     question.PointsForQuestion = 0;
@@ -277,14 +246,5 @@ namespace Inzynierka.Services.Services
             return clonedQuestions;
         }
 
-        private bool CheckIsCalculatedQuestionPointsAreModified(List<QuestionViewModel> viewModelQuestions, 
-            List<Question> calculatedPoints)
-        {
-            for (int i = 0; i < calculatedPoints.Count; i++)
-                if (calculatedPoints[i].PointsForQuestion != viewModelQuestions.ElementAt(i).CalculatedPoints)
-                    return true;
-
-            return false;
-        }
     }
 }

@@ -17,9 +17,6 @@ namespace Inzynierka.Data.ViewModels
         public bool AnsweredBeforeSugestion { get; set; }
 
         [Required]
-        public double CalculatedPoints { get; set; }
-
-        [Required]
         public double TimeForAnswerInSeconds { get; set; }
     }
 }
