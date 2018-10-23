@@ -26,6 +26,11 @@ namespace Inzynierka.Services.Services
             { "chord", 1.5 },
 
         };
+        private readonly Dictionary<string, double> TimeLimits = new Dictionary<string, double>()
+        {
+            { "sound", 10 },
+            { "chord", 12.5 },
+        };
 
         public QuizService(IRepository<Question> questionRepository,
             IRepository<Rate> rateRepository, IRepository<User> userRepository, IRepository<Quiz> quizRepository, 
@@ -127,31 +132,15 @@ namespace Inzynierka.Services.Services
         public async Task<ResultDto<CreateQuizDto>> CreateQuiz(CreateQuizViewModel viewModel, int userId)
         {
             var result = new ResultDto<CreateQuizDto>();
-
             var questions = _mapper.Map<List<QuestionViewModel>, List<Question>>(viewModel.Questions);
 
-            var questionsWithCalculatedPoints = await Task.Run(() => CalculatePointsForEveryQuestion(questions, viewModel.QuizType));
-
-            double sumOfAllPoints = questionsWithCalculatedPoints.Sum(x => x.PointsForQuestion);
-            double RateInNumber = await Task.Run(() =>
-                CalculatePercentageRate(viewModel.NumberOfPositiveRates,
-                    viewModel.NumberOfNegativeRates)
-            );
+            double effectiveness = CalculatePercentageRate(viewModel.NumberOfPositiveRates, viewModel.NumberOfNegativeRates);
 
             var quiz = _mapper.Map<Quiz>(viewModel);
-            quiz.UserId = userId;
-            quiz.RateInNumber = RateInNumber;
 
-            double sumOfTimeForAnswers = 0;
-
-            foreach(var element in viewModel.Questions)
-            {
-                sumOfTimeForAnswers += element.TimeForAnswerInSeconds;
-            }
-
-            quiz.SecondsSpendOnQuiz = Math.Round(sumOfTimeForAnswers, 2);
-            quiz.PointsForGame = Math.Round((sumOfAllPoints + RateInNumber) - quiz.SecondsSpendOnQuiz, 2);
-
+            quiz.PointsForGame = CalculatePointsForEveryQuestion(questions, viewModel.QuizType);
+            quiz.SecondsSpendOnQuiz = Math.Round(viewModel.Questions.Sum(x => x.TimeForAnswerInSeconds), 2);
+            quiz.UserId = userId; quiz.RateInNumber = effectiveness;
             var insertedQuiz = await _quizRepository.InsertAndReturnObject(quiz);
 
             if (insertedQuiz == null)
@@ -161,23 +150,39 @@ namespace Inzynierka.Services.Services
             }
 
             foreach (var question in questions)
-            {
                 question.QuizId = insertedQuiz.Id;
-                await _questionRepository.Insert(question);
+
+            int isQuestionsInserted = await _questionRepository.InsertList(questions);
+
+            if (isQuestionsInserted == 0)
+            {
+                result.Errors.Add("Wystapił błąd podczas dodawania wyniku do twojej historii. Ta gra nie zostanie uznana");
+                return result;
             }
 
-            RateModel rateModel = await Task.Run(() => CalculateCurrentRate(userId));
+            var quizes = _quizRepository.GetAllBy(x => x.UserId == userId).ToList();
+
+            RateModel rateModel = CalculateCurrentRate(userId, quizes);
 
             var rate = _rateRepository.GetBy(x => x.UserId == userId);
 
-            if (rate != null)
+            bool rateExist = true;
+            if (rate == null)
             {
-                rate.CurrentPercentageRate = rateModel.RateValue;
-                rate.NumberOfPlayedGames = rateModel.CountOfQuizes;
-                rate.PointsForAllGames = rateModel.PointsForAllGames;
-                int isRateUpdated = _rateRepository.Update(rate);
+                rate = new Rate();
+                rateExist = false;
+            }
 
-                if(isRateUpdated == 0)
+            rate.CurrentPercentageRate = rateModel.PercentageRate;
+            rate.NumberOfPlayedGames = rateModel.CountOfQuizes;
+            rate.PointsForAllGames = rateModel.PointsForAllGames;
+            rate.UserId = userId;
+
+            if (rateExist)
+            {
+                rate.CreationDate = rate.CreationDate;
+                int isRateUpdated = _rateRepository.Update(rate);
+                if (isRateUpdated == 0)
                 {
                     result.Errors.Add("Wystąpił błąd podczas dodawania nowych danych do twojego rankingu");
                     return result;
@@ -185,19 +190,55 @@ namespace Inzynierka.Services.Services
             }
             else
             {
-                var newRate = new Rate();
-                newRate.UserId = userId;
-                newRate.CurrentPercentageRate = rateModel.RateValue;
-                newRate.PointsForAllGames = rateModel.PointsForAllGames;
-                newRate.NumberOfPlayedGames = 1;
-
-                int isRateInserted = await _rateRepository.Insert(newRate);
-
-                if(isRateInserted == 0)
+                int isRateInserted = await _rateRepository.Insert(rate);
+                if (isRateInserted == 0)
                 {
                     result.Errors.Add("Wystąpił błąd podczas dodawania oceny");
                     return result;
                 }
+            }
+
+            var quizDto = new CreateQuizDto();
+
+            quizDto.ActualPoints = rate.PointsForAllGames;
+            quizDto.NumberOfPlayedGames = rate.NumberOfPlayedGames;
+            quizDto.Effectiveness = rate.CurrentPercentageRate;
+            quizDto.NumberOfAllPositiveAnswers = rateModel.NumberOfAllPositiveAnswers;
+            quizDto.NumberOfAllNegativeAnswers = rateModel.NumberOfAllNegativeAnswers;
+
+            quizDto.TimeAverage = Math.Round(quizes.Sum(x => x.SecondsSpendOnQuiz) / rateModel.CountOfQuizes, 2);
+
+            var rates = _rateRepository.GetAll(x => x.User.UserSetting).OrderByDescending(x => x.CurrentPercentageRate).ToList();
+
+            var SimilarUsers = new List<SimilarUserDto>();
+
+            var ratesWithoutRequestingUser = rates.Where(x => x.UserId != userId).Take(6).ToList();
+
+            quizDto.PlaceInRank = GetPlaceInRank(ratesWithoutRequestingUser, rates.Single(x => x.UserId == userId).CurrentPercentageRate);
+
+            if (ratesWithoutRequestingUser.Count() > 0)
+            {
+                foreach (var el in rates)
+                {
+                    SimilarUsers.Add(new SimilarUserDto(el.User.Username, el.User.Sex, el.User.UserSetting != null ? el.User.UserSetting.PathToAvatar : "",
+                        el.NumberOfPlayedGames, el.Id, el.PointsForAllGames));
+                }
+                quizDto.SimilarUsers = SimilarUsers;
+
+            }
+            result.SuccessResult = quizDto;
+
+            return result;
+        }
+
+        private int GetPlaceInRank(List<Rate> rates, double pointsForAllGamesForRequestingUser)
+        {
+            int result = 1;
+
+            foreach(var rate in rates)
+            {
+                if (rate.CurrentPercentageRate > pointsForAllGamesForRequestingUser)
+                    result++;
             }
 
             return result;
@@ -211,39 +252,50 @@ namespace Inzynierka.Services.Services
             return rate;
         }
 
-        private RateModel CalculateCurrentRate(int userId)
+        private RateModel CalculateCurrentRate(int userId, List<Quiz> quizes)
         {
-            double overAllRate;
+            double percentageRate = 0;
+            int numberOfAllPositiveAnswers = 0;
+            int numberOfAllNegativeAnswers = 0;
 
-            var quizes = _quizRepository.GetAllBy(x => x.UserId == userId);
-
-            int countOfQuizes = quizes.Count();
-
-            double overAllSum = quizes.Sum(x => x.RateInNumber);
-
-            overAllRate = Math.Round(overAllSum / countOfQuizes, 2);
-
-            double overAllPoints = quizes.Sum(x => x.PointsForGame);
-
-            return new RateModel(overAllRate, countOfQuizes, overAllPoints);
-        }
-
-        private List<Question> CalculatePointsForEveryQuestion(List<Question> questions, string quizType)
-        {
-            var clonedQuestions = _mapper.Map<List<Question>>(questions);
-
-            foreach(var question in clonedQuestions)
+            int countOfQuestions = 0;
+            foreach(var quiz in quizes)
             {
-                if (question.CorrectAnswer == question.Answer)
-                {
-                    question.PointsForQuestion = question.TimeForAnswerInSeconds;
-                    question.PointsForQuestion += question.AnsweredBeforeSugestion ? 5 : 0;
-                }
-                else
-                    question.PointsForQuestion = 0;
+                numberOfAllPositiveAnswers += quiz.NumberOfPositiveRates;
+                numberOfAllNegativeAnswers += quiz.NumberOfNegativeRates;
+                countOfQuestions += quiz.NumberOfNegativeRates + quiz.NumberOfPositiveRates;
             }
 
-            return clonedQuestions;
+            double numberOfPositiveAnswers = quizes.Sum(x => x.NumberOfPositiveRates);
+
+            if(numberOfPositiveAnswers != 0)
+                percentageRate = Math.Round((numberOfPositiveAnswers / countOfQuestions) * 100, 2);
+
+            double overAllPoints = Math.Round(quizes.Sum(x => x.PointsForGame), 3);
+
+            return new RateModel(percentageRate, quizes.Count, overAllPoints, numberOfAllPositiveAnswers, numberOfAllNegativeAnswers);
+        }
+
+        private double CalculatePointsForEveryQuestion(List<Question> questions, string quizType)
+        {
+            double sum = 0;
+            foreach(var question in questions)
+            {
+                question.PointsForQuestion = 0;
+
+                if (question.CorrectAnswer == question.Answer)
+                {
+                    question.PointsForQuestion = Math.Round((TimeLimits[quizType] - question.TimeForAnswerInSeconds) / TimeLimits[quizType], 3);
+                }
+
+                if (!question.AnsweredBeforeSugestion)
+                {
+                    question.PointsForQuestion -= 0.02;
+                }
+
+                sum += question.PointsForQuestion;
+            }
+            return Math.Round(sum, 3);
         }
 
     }

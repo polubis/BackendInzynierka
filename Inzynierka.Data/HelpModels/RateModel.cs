@@ -6,15 +6,20 @@ namespace Inzynierka.Data.HelpModels
 {
     public class RateModel
     {
-        public double RateValue { get; set; }
+        public double PercentageRate { get; set; }
         public int CountOfQuizes { get; set; }
         public double PointsForAllGames { get; set; }
+        public int NumberOfAllPositiveAnswers { get; set; }
+        public int NumberOfAllNegativeAnswers { get; set; }
 
-        public RateModel(double RateValue, int CountOfQuizes, double PointsForAllGames)
+
+        public RateModel(double PercentageRate, int CountOfQuizes, double PointsForAllGames, int NumberOfAllPositiveAnswers, int NumberOfAllNegativeAnswers)
         {
-            this.RateValue = RateValue;
+            this.PercentageRate = PercentageRate;
             this.CountOfQuizes = CountOfQuizes;
             this.PointsForAllGames = PointsForAllGames;
+            this.NumberOfAllPositiveAnswers = NumberOfAllPositiveAnswers;
+            this.NumberOfAllNegativeAnswers = NumberOfAllNegativeAnswers;
         }
     }
 }
